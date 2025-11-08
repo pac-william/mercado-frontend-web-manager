@@ -3,24 +3,21 @@
 import {
     Sidebar,
     SidebarContent,
-    SidebarFooter,
     SidebarGroup,
     SidebarGroupContent,
     SidebarGroupLabel,
     SidebarMenu,
     SidebarMenuButton,
-    SidebarMenuItem,
-    SidebarRail
+    SidebarMenuItem
 } from "@/components/ui/sidebar";
 import {
     FileText,
     Home,
     LayoutDashboard,
-    LogOut,
     Package,
     ShoppingCart,
     Truck,
-    Users,
+    Users
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -76,7 +73,7 @@ export default function AdminSidebar({ tenantId }: AdminSidebarProps) {
 
     return (
         <Sidebar collapsible="icon">
-           
+
             <SidebarContent>
                 <SidebarGroup>
                     <SidebarGroupLabel>Gerenciamento</SidebarGroupLabel>
@@ -110,26 +107,6 @@ export default function AdminSidebar({ tenantId }: AdminSidebarProps) {
                     </SidebarGroupContent>
                 </SidebarGroup>
             </SidebarContent>
-            <SidebarFooter>
-                <SidebarMenu>
-                    <SidebarMenuItem>
-                        <SidebarMenuButton
-                            asChild
-                            variant="outline"
-                            tooltip="Sair"
-                        >
-                            <a
-                                href="/auth/logout"
-                                className="flex items-center gap-3"
-                            >
-                                <LogOut className="h-4 w-4" />
-                                <span>Sair</span>
-                            </a>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                </SidebarMenu>
-            </SidebarFooter>
-            <SidebarRail />
         </Sidebar>
     );
 }
