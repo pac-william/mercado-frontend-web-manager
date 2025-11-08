@@ -5,7 +5,16 @@ import { redirect } from "next/navigation";
 import Header from "../../components/Header";
 import AdminSidebar from "./components/AdminSidebar";
 
-export default async function Layout({ children, params }: { children: React.ReactNode, params: { tenantId: string } }) {
+type LayoutParams = {
+    tenantId: string;
+};
+
+type TenantLayoutProps = {
+    children: React.ReactNode;
+    params: Promise<LayoutParams>;
+};
+
+export default async function Layout({ children, params }: TenantLayoutProps) {
     const { tenantId } = await params;
     const session = await auth0.getSession();
 
