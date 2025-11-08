@@ -25,7 +25,7 @@ export default async function Header() {
             <div className="grid grid-cols-3 gap-4 container mx-auto">
                 <h1 className="text-2xl font-bold text-foreground items-center flex">
                     <Link href="/" className="text-foreground hover:text-primary">
-                        Smart Market
+                        Smart Market - Admin
                     </Link>
                 </h1>
                 <SearchField paramName="name" />
