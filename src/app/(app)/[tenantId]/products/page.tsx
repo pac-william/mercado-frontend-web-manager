@@ -13,12 +13,12 @@ interface ProductsSearchParams {
     name?: string;
     minPrice?: string;
     maxPrice?: string;
-    marketId?: string;
     categoryId?: string | string[];
 }
 
-export default async function Products({ searchParams }: { searchParams: Promise<ProductsSearchParams> }) {
-    const { categoryId, page, size, minPrice, maxPrice, marketId, name } = await searchParams;
+export default async function Products({ searchParams, params }: { searchParams: Promise<ProductsSearchParams>, params: { tenantId: string } }) {
+    const { tenantId } = await params;
+    const { categoryId, page, size, minPrice, maxPrice, name } = await searchParams;
     const categoryFilter = Array.isArray(categoryId) ? categoryId : categoryId ? [categoryId] : undefined;
 
     const { products } = await getProducts({
@@ -27,7 +27,7 @@ export default async function Products({ searchParams }: { searchParams: Promise
         name: name,
         minPrice: Number(minPrice),
         maxPrice: Number(maxPrice),
-        marketId: marketId,
+        marketId: tenantId,
         categoryId: categoryFilter,
     });
     const { categories } = await getCategories({ size: 100 });
@@ -37,7 +37,7 @@ export default async function Products({ searchParams }: { searchParams: Promise
             <div className="flex flex-1 flex-col gap-4 pr-4">
                 <RouterBack />
                 <div className="flex flex-row gap-4 items-center justify-between">
-                    <MultiSelect options={categories.map((category) => ({
+                    <MultiSelect marketId={tenantId} options={categories.map((category) => ({
                         label: category.name,
                         value: category.id,
                     }))} label="Categorias" placeholder="Selecione as categorias" emptyIndicator="Nenhuma categoria encontrada" />
@@ -47,7 +47,7 @@ export default async function Products({ searchParams }: { searchParams: Promise
                         </Link>
                     </Button>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
                     {products.map((product) => (
                         <ProductCard key={product.id} product={product} variant="admin" />
                     ))}

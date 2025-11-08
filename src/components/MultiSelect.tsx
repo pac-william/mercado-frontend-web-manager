@@ -4,13 +4,14 @@ import MultipleSelector, { Option } from "@/components/ui/multiselect";
 import { useRouter } from "next/navigation";
 
 interface MultiSelectProps {
+  marketId: string;
   options: Option[];
   label: string;
   placeholder: string;
   emptyIndicator: string;
 }
 
-export default function MultiSelect({ options, label, placeholder, emptyIndicator = "Nenhum resultado encontrado" }: MultiSelectProps) {
+export default function MultiSelect({ marketId, options, label, placeholder, emptyIndicator = "Nenhum resultado encontrado" }: MultiSelectProps) {
   const router = useRouter();
 
   const handleSelect = (options: Option[]) => {
@@ -23,7 +24,7 @@ export default function MultiSelect({ options, label, placeholder, emptyIndicato
     });
 
     const queryString = searchParams.toString();
-    const destination = queryString ? `/products?${queryString}` : "/products";
+    const destination = queryString ? `/${marketId}/products?${queryString}` : `/${marketId}/products`;
 
     router.push(destination);
   }

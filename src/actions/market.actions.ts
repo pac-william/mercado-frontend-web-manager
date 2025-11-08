@@ -4,10 +4,30 @@ import { Market, MarketPaginatedResponse } from "@/app/domain/marketDomain"
 import { baseUrl } from "@/config/server"
 import { MarketDTO } from "@/dtos/marketDTO"
 import { auth0 } from "@/lib/auth0"
+import { buildSearchParams } from "@/lib/misc"
 
-export const getMarkets = async () => {
+interface GetMarketsFilters {
+    page?: number;
+    size?: number;
+    name?: string;
+    address?: string;
+    ownerId?: string;
+    managersIds?: string[];
+}
+
+
+export const getMarkets = async (filters?: GetMarketsFilters) => {
     try {
-        const response = await fetch(`${baseUrl}/api/v1/markets`, {
+        const params = buildSearchParams({
+            page: filters?.page,
+            size: filters?.size,
+            name: filters?.name,
+            address: filters?.address,
+            ownerId: filters?.ownerId,
+            managersIds: filters?.managersIds,
+        });
+
+        const response = await fetch(`${baseUrl}/api/v1/markets?${params.toString()}`, {
             cache: 'no-store',
         });
         

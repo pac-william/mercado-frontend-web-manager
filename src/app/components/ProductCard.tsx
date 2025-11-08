@@ -16,7 +16,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { ProductCreateForm } from "../(app)/products/create/components/ProductCreateForm";
+import { ProductCreateForm } from "../(app)/[tenantId]/products/create/components/ProductCreateForm";
 import { Product } from "../domain/productDomain";
 import { formatPrice } from "../utils/formatters";
 
@@ -296,24 +296,6 @@ export default function ProductCard({ product, variant = "buy-now", badgeText, b
                                 </AlertDialogContent>
                             </AlertDialog>
 
-                        </div>
-                    </CardHeader>
-
-                    <Separator />
-
-                    <CardHeader className="flex flex-row gap-2">
-                        <Image src={bh_supermercados} alt="Product" width={100} height={100} className="object-cover rounded-full aspect-square w-12 h-12 shadow-md border" />
-                        <div className="rounded-full flex flex-col gap-2">
-                            <div className="flex flex-col">
-                                <span className="text-sm font-bold text-card-foreground">Market 1</span>
-                                <div className="flex flex-row gap-1">
-                                    <Star size={16} className="text-yellow-500" />
-                                    <Star size={16} className="text-yellow-500" />
-                                    <Star size={16} className="text-yellow-500" />
-                                    <Star size={16} className="text-yellow-500" />
-                                    <Star size={16} className="text-yellow-500" />
-                                </div>
-                            </div>
                         </div>
                     </CardHeader>
 

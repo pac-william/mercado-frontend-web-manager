@@ -7,14 +7,14 @@ import {
     SidebarGroup,
     SidebarGroupContent,
     SidebarGroupLabel,
-    SidebarHeader,
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
-    SidebarRail,
+    SidebarRail
 } from "@/components/ui/sidebar";
 import {
     FileText,
+    Home,
     LayoutDashboard,
     LogOut,
     Package,
@@ -25,52 +25,58 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const menuItems = [
-    {
-        title: "Dashboard",
-        href: "/dashboard",
-        icon: LayoutDashboard,
-    },
-    {
-        title: "Produtos",
-        href: "/products",
-        icon: Package,
-    },
-    {
-        title: "Entrega",
-        href: "/deliveries",
-        icon: ShoppingCart,
-    },
-    {
-        title: "Entregadores",
-        href: "/deliverers",
-        icon: Truck,
-    },
-    {
-        title: "Usuários",
-        href: "/users",
-        icon: Users,
-    },
-    {
-        title: "Relatórios",
-        href: "/reports",
-        icon: FileText,
-    },
-];
 
-export default function AdminSidebar() {
+
+interface AdminSidebarProps {
+    tenantId: string;
+}
+
+export default function AdminSidebar({ tenantId }: AdminSidebarProps) {
+
+
+    const menuItems = [
+        {
+            title: "Meus mercados",
+            href: `/`,
+            icon: Home,
+        },
+        {
+            title: "Dashboard",
+            href: `/${tenantId}/dashboard`,
+            icon: LayoutDashboard,
+        },
+        {
+            title: "Produtos",
+            href: `/${tenantId}/products`,
+            icon: Package,
+        },
+        {
+            title: "Entrega",
+            href: `/${tenantId}/deliveries`,
+            icon: ShoppingCart,
+        },
+        {
+            title: "Entregadores",
+            href: `/${tenantId}/deliverers`,
+            icon: Truck,
+        },
+        {
+            title: "Usuários",
+            href: `/${tenantId}/users`,
+            icon: Users,
+        },
+        {
+            title: "Relatórios",
+            href: `/${tenantId}/reports`,
+            icon: FileText,
+        },
+    ];
+
     const pathname = usePathname();
 
     return (
         <Sidebar collapsible="icon">
-            <SidebarHeader className="px-2 py-4">
-                <Link
-                    href="/dashboard"
-                    className="text-lg font-semibold leading-none text-sidebar-foreground group-data-[collapsible=icon]:hidden"
-                >
-                    Smart Market
-                </Link>
-            </SidebarHeader>
+           
             <SidebarContent>
                 <SidebarGroup>
                     <SidebarGroupLabel>Gerenciamento</SidebarGroupLabel>

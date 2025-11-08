@@ -1,11 +1,15 @@
-import { Meta } from "@/app/domain/metaDomain";
+import { Meta } from "./metaDomain";
 
 export class Market {
     constructor(
         public id: string,
         public name: string,
         public address: string,
-        public logo: string,
+        public profilePicture: string,
+        public ownerId: string,
+        public managersIds: string[],
+        public createdAt: Date,
+        public updatedAt: Date,
     ) { }
 }
 
