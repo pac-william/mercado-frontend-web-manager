@@ -16,7 +16,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { ProductCreateForm } from "../admin/products/create/components/ProductCreateForm";
+import { ProductCreateForm } from "../(app)/products/create/components/ProductCreateForm";
 import { Product } from "../domain/productDomain";
 import { formatPrice } from "../utils/formatters";
 

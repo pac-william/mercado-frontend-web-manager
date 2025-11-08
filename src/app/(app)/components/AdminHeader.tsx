@@ -1,8 +1,9 @@
 "use client"
 
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Home, LayoutDashboard } from "lucide-react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 export default function AdminHeader() {
@@ -10,9 +11,13 @@ export default function AdminHeader() {
     const isInAdmin = pathname?.startsWith('/admin');
 
     return (
-        <header className="flex w-full justify-between items-center p-4 bg-background border-b border-border">
-            <div className="flex flex-row gap-4 container mx-auto items-center">
-                <Link href="/admin" className="text-2xl font-bold text-foreground hover:text-primary">
+        <header className="bg-background border-b border-border">
+            <div className="container mx-auto flex items-center gap-4 p-4">
+                <SidebarTrigger className="-ml-2 md:hidden" />
+                <Link
+                    href="/admin"
+                    className="text-2xl font-bold text-foreground hover:text-primary"
+                >
                     Smart Market Admin
                 </Link>
                 <div className="ml-auto flex flex-row gap-2 items-center">
@@ -25,7 +30,10 @@ export default function AdminHeader() {
                         </Button>
                     ) : (
                         <Button variant="ghost" size="sm" asChild>
-                            <Link href="/admin/dashboard" className="flex items-center gap-2">
+                            <Link
+                                href="/admin/dashboard"
+                                className="flex items-center gap-2"
+                            >
                                 <LayoutDashboard className="h-4 w-4" />
                                 Dashboard
                             </Link>

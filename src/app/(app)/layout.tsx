@@ -1,40 +1,31 @@
-import { getUserByAuth0Id } from "@/actions/user.actions";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { auth0 } from "@/lib/auth0";
-import AdminHeader from "../admin/components/AdminHeader";
+import { redirect } from "next/navigation";
 import Header from "../components/Header";
+import AdminSidebar from "./components/AdminSidebar";
 
 export default async function Layout({ children }: { children: React.ReactNode }) {
     const session = await auth0.getSession();
 
-    let isAdmin = false;
-    if (session?.user?.sub) {
-        try {
-            const user = session.user as { app_metadata?: { role?: string }; user_metadata?: { role?: string } };
-            const roleFromToken = user?.app_metadata?.role || user?.user_metadata?.role;
-
-            if (roleFromToken) {
-                isAdmin = roleFromToken === 'MARKET_ADMIN' || roleFromToken === 'ADMIN';
-            } else {
-                try {
-                    const profile = await getUserByAuth0Id(session.user.sub);
-                    isAdmin = profile.role === 'MARKET_ADMIN' || profile.role === 'ADMIN';
-                } catch (error) {
-                    console.error('Erro ao buscar role do backend:', error);
-                    isAdmin = false;
-                }
-            }
-        } catch (error) {
-            console.error('Erro ao verificar role:', error);
-            isAdmin = false;
-        }
+    if (!session) {
+        redirect('/auth/login');
     }
 
     return (
         <div className="flex flex-1 flex-col h-screen bg-background text-foreground">
-            {isAdmin ? <AdminHeader /> : <Header />}
-            <div className="flex flex-1 flex-col gap-4">
-                {children}
-            </div>
+            <SidebarProvider>
+                <div className="flex min-h-screen w-full">
+                    <AdminSidebar />
+                    <SidebarInset>
+                        <div className="flex h-full flex-col">
+                            <Header />
+                            <div className="flex-1 overflow-y-auto p-6">
+                                {children}
+                            </div>
+                        </div>
+                    </SidebarInset>
+                </div>
+            </SidebarProvider>
         </div >
     )
 }
