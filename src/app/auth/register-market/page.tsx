@@ -1,14 +1,15 @@
 "use client"
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { createMarketForUser } from "@/actions/auth.actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Store, Mail, Lock, MapPin, Image, Loader2 } from "lucide-react";
+import { Loader2, Lock, Mail, MapPin, Store } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { toast } from "sonner";
 
 export default function RegisterMarketPage() {
@@ -184,7 +185,7 @@ export default function RegisterMarketPage() {
                         <div className="space-y-2">
                             <Label htmlFor="profilePicture">URL da Logo (Opcional)</Label>
                             <div className="relative">
-                                <Image className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                <Image src={"https://via.placeholder.com/150"} alt="Logo" width={100} height={100} className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                                 <Input
                                     id="profilePicture"
                                     type="url"
