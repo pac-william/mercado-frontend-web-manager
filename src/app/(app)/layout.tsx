@@ -14,14 +14,12 @@ export default async function Layout({ children }: { children: React.ReactNode }
     return (
         <div className="flex flex-1 flex-col h-screen bg-background text-foreground">
             <SidebarProvider>
-                <div className="flex min-h-screen w-full">
+                <div className="flex flex-1">
                     <AdminSidebar />
                     <SidebarInset>
-                        <div className="flex h-full flex-col">
-                            <Header />
-                            <div className="flex-1 overflow-y-auto p-6">
-                                {children}
-                            </div>
+                        <Header />
+                        <div className="flex flex-1 flex-col p-6">
+                            {children}
                         </div>
                     </SidebarInset>
                 </div>
