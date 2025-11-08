@@ -1,14 +1,14 @@
-import { auth0 } from "@/lib/auth0";
-import { getUserByAuth0Id } from "@/actions/user.actions";
+import { getMarketById } from "@/actions/market.actions";
 import { getOrders } from "@/actions/order.actions";
 import { getProductsByMarket } from "@/actions/products.actions";
-import { getMarketById } from "@/actions/market.actions";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { getUserByAuth0Id } from "@/actions/user.actions";
+import { Order } from "@/app/domain/orderDomain";
 import { Button } from "@/components/ui/button";
-import { Package, ShoppingCart, TrendingUp, DollarSign, Plus, Store, Settings } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { auth0 } from "@/lib/auth0";
+import { DollarSign, Package, Plus, Settings, ShoppingCart, Store, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Order } from "@/app/domain/orderDomain";
 
 export default async function DashboardPage() {
     const session = await auth0.getSession();

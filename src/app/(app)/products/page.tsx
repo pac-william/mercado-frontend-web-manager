@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import Link from "next/link";
 
-type ProductsSearchParams = {
+interface ProductsSearchParams {
     page?: string;
     size?: string;
     name?: string;
@@ -15,28 +15,19 @@ type ProductsSearchParams = {
     maxPrice?: string;
     marketId?: string;
     categoryId?: string | string[];
-};
+}
 
-export default async function Products({ searchParams = {} }: { searchParams?: ProductsSearchParams }) {
-    const rawCategoryFilter = searchParams.categoryId;
-    const categoryFilter = Array.isArray(rawCategoryFilter)
-        ? rawCategoryFilter
-        : rawCategoryFilter
-            ? [rawCategoryFilter]
-            : undefined;
-
-    const page = searchParams.page ? Number(searchParams.page) : 1;
-    const size = searchParams.size ? Number(searchParams.size) : 100;
-    const minPrice = searchParams.minPrice ? Number(searchParams.minPrice) : undefined;
-    const maxPrice = searchParams.maxPrice ? Number(searchParams.maxPrice) : undefined;
+export default async function Products({ searchParams }: { searchParams: Promise<ProductsSearchParams> }) {
+    const { categoryId, page, size, minPrice, maxPrice, marketId, name } = await searchParams;
+    const categoryFilter = Array.isArray(categoryId) ? categoryId : categoryId ? [categoryId] : undefined;
 
     const { products } = await getProducts({
-        page: Number.isFinite(page) ? page : 1,
-        size: Number.isFinite(size) ? size : 100,
-        name: searchParams.name,
-        minPrice: minPrice !== undefined && Number.isFinite(minPrice) ? minPrice : undefined,
-        maxPrice: maxPrice !== undefined && Number.isFinite(maxPrice) ? maxPrice : undefined,
-        marketId: searchParams.marketId,
+        page: Number(page),
+        size: Number(size),
+        name: name,
+        minPrice: Number(minPrice),
+        maxPrice: Number(maxPrice),
+        marketId: marketId,
         categoryId: categoryFilter,
     });
     const { categories } = await getCategories({ size: 100 });
