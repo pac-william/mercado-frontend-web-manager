@@ -22,7 +22,7 @@ export const DeliverySettingsForm = ({ tenantId }: DeliverySettingsFormProps) =>
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
-    const form = useForm<z.infer<typeof DeliverySettingsDTO>>({
+    const form = useForm<z.input<typeof DeliverySettingsDTO>>({
         resolver: zodResolver(DeliverySettingsDTO),
         defaultValues: {
             marketId: tenantId,
@@ -58,7 +58,7 @@ export const DeliverySettingsForm = ({ tenantId }: DeliverySettingsFormProps) =>
             });
     }, [tenantId, form]);
 
-    async function onSubmit(values: z.infer<typeof DeliverySettingsDTO>) {
+    async function onSubmit(values: z.input<typeof DeliverySettingsDTO>) {
         if (isSubmitting) return;
 
         if (!values.deliveryRadius || values.deliveryRadius < 0) {

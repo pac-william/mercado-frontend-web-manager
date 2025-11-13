@@ -270,7 +270,11 @@ export default function ProductCard({ product, variant = "buy-now", badgeText, b
                                     </DialogHeader>
                                     <Separator />
                                     <div className="p-4 flex flex-col gap-2">
-                                        <ProductCreateForm markets={[]} />
+                                        <ProductCreateForm
+                                            tenantId={product.marketId}
+                                            categories={[]}
+                                            productId={product.id}
+                                        />
                                     </div>
                                 </DialogContent>
                             </Dialog>
