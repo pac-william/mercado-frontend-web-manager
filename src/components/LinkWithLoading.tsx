@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useLoading } from "@/contexts/LoadingContext";
 import { ComponentPropsWithoutRef } from "react";
 
 interface LinkWithLoadingProps extends ComponentPropsWithoutRef<typeof Link> {
@@ -15,10 +14,9 @@ export default function LinkWithLoading({
   message,
   ...props 
 }: LinkWithLoadingProps) {
-  const { setLoading } = useLoading();
 
   const handleClick = () => {
-    setLoading(true, message);
+    // loading behavior removed
   };
 
   return (
