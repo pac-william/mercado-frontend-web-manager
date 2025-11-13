@@ -22,14 +22,6 @@ export const description = "Distribuição de pedidos por status"
 
 type StatusPoint = { status: string; pedidos: number; fill?: string }
 
-const defaultChartData: StatusPoint[] = [
-  { status: "Entregues", pedidos: 186, fill: "var(--color-Entregues)" },
-  { status: "Preparando", pedidos: 44, fill: "var(--color-Preparando)" },
-  { status: "Confirmados", pedidos: 28, fill: "var(--color-Confirmados)" },
-  { status: "Pendentes", pedidos: 19, fill: "var(--color-Pendentes)" },
-  { status: "Cancelados", pedidos: 13, fill: "var(--color-Cancelados)" },
-]
-
 const chartConfig = {
   pedidos: {
     label: "Pedidos",
@@ -56,7 +48,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-export function ChartPieLabel({ data, title = "Status dos pedidos", subtitle = "Últimos 30 dias" }: { data?: StatusPoint[]; title?: string; subtitle?: string }) {
+export function ChartPieLabel({ data, title = "Status dos pedidos", subtitle = "Últimos 30 dias" }: { data: StatusPoint[]; title?: string; subtitle?: string }) {
   return (
     <Card className="flex flex-col flex-1 h-full">
       <CardHeader className="items-center pb-0">
@@ -81,7 +73,7 @@ export function ChartPieLabel({ data, title = "Status dos pedidos", subtitle = "
                 />
               }
             />
-            <Pie data={(data && data.length > 0 ? data : defaultChartData).map(d => ({ fill: d.fill, status: d.status, pedidos: d.pedidos }))} dataKey="pedidos" label nameKey="status" />
+            <Pie data={data.map(d => ({ fill: d.fill, status: d.status, pedidos: d.pedidos }))} dataKey="pedidos" label nameKey="status" />
           </PieChart>
         </ChartContainer>
       </CardContent>
