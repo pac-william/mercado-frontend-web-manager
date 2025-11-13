@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useLoading } from "@/contexts/LoadingContext";
-import { ReactNode, ComponentPropsWithoutRef } from "react";
+import { ComponentPropsWithoutRef } from "react";
 
 interface LinkWithLoadingProps extends ComponentPropsWithoutRef<typeof Link> {
   message?: string;
