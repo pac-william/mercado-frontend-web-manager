@@ -16,14 +16,14 @@ interface ProductsSearchParams {
     categoryId?: string | string[];
 }
 
-export default async function Products({ searchParams, params }: { searchParams: Promise<ProductsSearchParams>, params: { tenantId: string } }) {
+export default async function Products({ searchParams, params }: { searchParams: Promise<ProductsSearchParams>, params: Promise<{ tenantId: string }> }) {
     const { tenantId } = await params;
-    const { categoryId, page, size, minPrice, maxPrice, name } = await searchParams;
+    const { categoryId, page, minPrice, maxPrice, name } = await searchParams;
     const categoryFilter = Array.isArray(categoryId) ? categoryId : categoryId ? [categoryId] : undefined;
 
     const { products } = await getProducts({
         page: Number(page),
-        size: Number(size),
+        size: Number(100),
         name: name,
         minPrice: Number(minPrice),
         maxPrice: Number(maxPrice),
@@ -47,11 +47,11 @@ export default async function Products({ searchParams, params }: { searchParams:
                         </Link>
                     </Button>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 justify-items-center">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 justify-items-center">
                     {products.map((product) => (
-                        <ProductCardAdmin 
-                            key={product.id} 
-                            product={product} 
+                        <ProductCardAdmin
+                            key={product.id}
+                            product={product}
                             tenantId={tenantId}
                         />
                     ))}

@@ -1,13 +1,13 @@
 "use client";
 
 import { deleteProduct, partialUpdateProduct } from "@/actions/products.actions";
-import { formatPrice } from "@/app/utils/formatters";
 import { Product } from "@/app/domain/productDomain";
+import { formatPrice } from "@/app/utils/formatters";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Pencil, Trash2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -64,9 +64,9 @@ export default function ProductCardAdmin({ product, tenantId }: ProductCardAdmin
     };
 
     return (
-        <Card className="flex flex-col w-full max-w-xs">
+        <Card className="flex flex-col w-full">
             <CardHeader>
-                <CardTitle className="text-lg line-clamp-2">{product.name}</CardTitle>
+                <CardTitle className="text-lg line-clamp-1">{product.name}</CardTitle>
             </CardHeader>
             <CardContent className="p-0 relative w-full aspect-square">
                 <Image 
@@ -76,7 +76,7 @@ export default function ProductCardAdmin({ product, tenantId }: ProductCardAdmin
                     className="object-cover p-4" 
                 />
             </CardContent>
-            <CardContent className="flex flex-col gap-2">
+            <CardContent className="flex flex-col gap-2 mt-auto">
                 <div className="flex flex-row items-center justify-between">
                     <span className="text-lg font-bold">{formatPrice(product.price)}</span>
                     <div className="flex flex-row gap-1">
