@@ -5,6 +5,9 @@ export const ProductDTO = z.object({
     price: z.number({ error: "Preço do produto é obrigatório" }),
     marketId: z.string({ error: "ID do mercado é obrigatório" }),
     image: z.string().optional(),
+    sku: z.string().optional(),
+    unit: z.string().optional(),
+    categoryId: z.string().min(1, { error: "ID da categoria é obrigatório" }),
 });
 
 export type ProductDTO = z.infer<typeof ProductDTO>;

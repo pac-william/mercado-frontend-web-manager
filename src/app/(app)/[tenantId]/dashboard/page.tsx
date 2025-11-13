@@ -10,7 +10,8 @@ import { DollarSign, Package, Plus, Settings, ShoppingCart, Store, TrendingUp } 
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({ params }: { params: { tenantId: string } }) {
+    const { tenantId } = params;
     const session = await auth0.getSession();
     
     if (!session) {
@@ -20,7 +21,7 @@ export default async function DashboardPage() {
     const user = session.user;
     const auth0Id = user?.sub || '';
 
-    let marketId: string | null = null;
+    let marketId: string | null = tenantId ?? null;
     let marketName = 'Seu Mercado';
     let marketAddress = '';
     let totalProducts = 0;
@@ -154,7 +155,7 @@ export default async function DashboardPage() {
             {/* Acesso Rápido */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                    <Link href="/admin/products">
+                    <Link href={`/${tenantId}/products`}>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <Package className="h-5 w-5" />
@@ -173,7 +174,7 @@ export default async function DashboardPage() {
                 </Card>
 
                 <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                    <Link href="/admin/products/create">
+                    <Link href={`/${tenantId}/products/create`}>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <Plus className="h-5 w-5" />
@@ -192,7 +193,7 @@ export default async function DashboardPage() {
                 </Card>
 
                 <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                    <Link href="/admin/settings">
+                    <Link href={`/${tenantId}/settings`}>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <Settings className="h-5 w-5" />

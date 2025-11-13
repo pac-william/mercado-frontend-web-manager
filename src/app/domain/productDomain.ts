@@ -11,6 +11,7 @@ export class Product {
         public image?: string | null,
         public categoryId?: string,
         public category?: Category | null,
+        public sku?: string | null,
     ) { }
 }
 

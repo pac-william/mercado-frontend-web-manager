@@ -20,12 +20,24 @@ function shouldRedirectToMobileDownload(request: NextRequest) {
 }
 
 export async function middleware(request: NextRequest) {
-  if (shouldRedirectToMobileDownload(request)) {
-    const redirectUrl = new URL(MOBILE_DOWNLOAD_PATH, request.url);
-    return NextResponse.redirect(redirectUrl);
-  }
+  try {
+    if (shouldRedirectToMobileDownload(request)) {
+      const redirectUrl = new URL(MOBILE_DOWNLOAD_PATH, request.url);
+      return NextResponse.redirect(redirectUrl);
+    }
 
-  return await auth0.middleware(request);
+    // Ensure request.url is a valid URL
+    if (!request.url || !request.url.startsWith('http')) {
+      console.error('Invalid request URL:', request.url);
+      return NextResponse.next();
+    }
+
+    return await auth0.middleware(request);
+  } catch (error) {
+    console.error('Auth0 middleware error:', error);
+    // If Auth0 middleware fails, continue without authentication
+    return NextResponse.next();
+  }
 }
 
 export const config = {
