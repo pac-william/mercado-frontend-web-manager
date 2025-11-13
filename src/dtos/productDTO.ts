@@ -8,6 +8,7 @@ export const ProductDTO = z.object({
     sku: z.string().optional(),
     unit: z.string().optional(),
     categoryId: z.string().min(1, { error: "ID da categoria é obrigatório" }),
+    isActive: z.boolean().optional(),
 });
 
 export type ProductDTO = z.infer<typeof ProductDTO>;

@@ -12,6 +12,7 @@ export class Product {
         public categoryId?: string,
         public category?: Category | null,
         public sku?: string | null,
+        public isActive?: boolean,
     ) { }
 }
 

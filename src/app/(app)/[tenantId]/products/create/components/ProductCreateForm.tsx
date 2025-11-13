@@ -10,6 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import { ProductDTO } from "@/dtos/productDTO";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useState, useEffect } from "react";
@@ -35,6 +36,7 @@ export const ProductCreateForm = ({tenantId, categories, productId}: ProductCrea
         resolver: zodResolver(ProductDTO),
         defaultValues: {
             marketId: tenantId,
+            isActive: true,
         },
         mode: "onChange",
     });
@@ -51,6 +53,7 @@ export const ProductCreateForm = ({tenantId, categories, productId}: ProductCrea
                         marketId: tenantId,
                         categoryId: productData.categoryId || "",
                         sku: productData.sku || "",
+                        isActive: productData.isActive ?? true,
                     });
                 })
                 .catch((error) => {
@@ -98,6 +101,7 @@ export const ProductCreateForm = ({tenantId, categories, productId}: ProductCrea
             image: productImage || undefined,
             sku: values.sku?.trim() || undefined,
             categoryId: values.categoryId.trim(),
+            isActive: values.isActive ?? true,
         };
 
         try {
@@ -228,6 +232,28 @@ export const ProductCreateForm = ({tenantId, categories, productId}: ProductCrea
                                         )}
                                     />
                                 </div>
+                                <FormField
+                                    control={form.control}
+                                    name="isActive"
+                                    render={({ field }) => (
+                                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                                            <div className="space-y-0.5">
+                                                <FormLabel className="text-base">
+                                                    Produto ativo
+                                                </FormLabel>
+                                                <div className="text-sm text-muted-foreground">
+                                                    {field.value ? "Produto visível para clientes" : "Produto oculto"}
+                                                </div>
+                                            </div>
+                                            <FormControl>
+                                                <Switch
+                                                    checked={field.value ?? true}
+                                                    onCheckedChange={field.onChange}
+                                                />
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
                                 <div className="flex justify-end pt-2">
                                     <Button
                                         type="submit"
