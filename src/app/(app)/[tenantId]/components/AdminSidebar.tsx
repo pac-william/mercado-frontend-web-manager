@@ -14,6 +14,7 @@ import {
     FileText,
     Home,
     LayoutDashboard,
+    MessagesSquare,
     Package,
     Settings,
     ShoppingCart,
@@ -57,6 +58,11 @@ export default function AdminSidebar({ tenantId }: AdminSidebarProps) {
             title: "Entregadores",
             href: `/${tenantId}/deliverers`,
             icon: Truck,
+        },
+        {
+            title: "Atendimento",
+            href: `/${tenantId}/support`,
+            icon: MessagesSquare,
         },
         {
             title: "Usuários",
