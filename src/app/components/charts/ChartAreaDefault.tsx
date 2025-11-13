@@ -20,14 +20,7 @@ import {
 
 export const description = "Evolução do ticket médio semanal"
 
-const chartData = [
-  { semana: "10-16 Jun", ticket: 68.4 },
-  { semana: "17-23 Jun", ticket: 71.2 },
-  { semana: "24-30 Jun", ticket: 73.9 },
-  { semana: "01-07 Jul", ticket: 76.5 },
-  { semana: "08-14 Jul", ticket: 74.1 },
-  { semana: "15-21 Jul", ticket: 79.3 },
-]
+type WeeklyTicketPoint = { semana: string; ticket: number }
 
 const chartConfig = {
   ticket: {
@@ -36,18 +29,18 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-export function ChartAreaDefault() {
+export function ChartAreaDefault({ data, title = "Ticket médio semanal", subtitle = "Últimas 6 semanas" }: { data: WeeklyTicketPoint[]; title?: string; subtitle?: string }) {
   return (
     <Card className="h-full">
       <CardHeader>
-        <CardTitle>Ticket médio semanal</CardTitle>
-        <CardDescription>Últimas 6 semanas</CardDescription>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>{subtitle}</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig}>
           <AreaChart
             accessibilityLayer
-            data={chartData}
+            data={data}
             margin={{
               left: 12,
               right: 12,

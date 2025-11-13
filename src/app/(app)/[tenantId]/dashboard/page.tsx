@@ -1,15 +1,14 @@
-import { getOrders } from "@/actions/order.actions";
-import { getProductsByMarket } from "@/actions/products.actions";
 import { getUserByAuth0Id } from "@/actions/user.actions";
+import { getReportsSummary } from "@/actions/reports.actions";
 import { ChartAreaDefault } from "@/app/components/charts/ChartAreaDefault";
-import { ChartBarMultiple } from "@/app/components/charts/ChartBarMultiple";
 import { ChartPieLabel } from "@/app/components/charts/ChartPieLabel";
 import { HeaderInfo } from "@/app/components/HeaderInfo";
-import { Order } from "@/app/domain/orderDomain";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { auth0 } from "@/lib/auth0";
 import { DollarSign, Package, ShoppingCart, TrendingUp } from "lucide-react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
+import { ChartPaymentMethod } from "@/app/components/charts/ChartPaymentMethod";
 
 export default async function DashboardPage({ params }: { params: Promise<{ tenantId: string }> }) {
     const { tenantId } = await params;
@@ -27,6 +26,9 @@ export default async function DashboardPage({ params }: { params: Promise<{ tena
     let totalOrders = 0;
     let pendingOrders = 0;
     let totalRevenue = 0;
+    let statusData: Array<{ status: string; pedidos: number }> = [];
+    let paymentData: Array<{ method: string; value: number }> = [];
+    let weeklyTicketData: Array<{ semana: string; ticket: number }> = [];
 
     try {
         if (auth0Id) {
@@ -38,27 +40,14 @@ export default async function DashboardPage({ params }: { params: Promise<{ tena
             }
 
             if (marketId) {
-                const products = await getProductsByMarket(marketId, { page: 1, size: 100 });
-                totalProducts = products.meta?.total || products.products.length;
-            }
-
-            // Buscar pedidos do mercado
-            try {
-                const ordersData = await getOrders({
-                    page: 1,
-                    size: 100,
-                    marketId: marketId || undefined
-                });
-                const orders = ordersData.orders || [];
-                totalOrders = ordersData.meta?.total || orders.length;
-                pendingOrders = orders.filter((order: Order) =>
-                    ['PENDING', 'CONFIRMED', 'PREPARING'].includes(order.status)
-                ).length;
-                totalRevenue = orders
-                    .filter((order: Order) => order.status === 'DELIVERED')
-                    .reduce((sum: number, order: Order) => sum + (order.total || 0), 0);
-            } catch (error) {
-                console.error('Erro ao buscar pedidos:', error);
+                const summary = await getReportsSummary(marketId, { days: 30, weeks: 6, top: 5 });
+                totalProducts = summary.totalProducts;
+                totalOrders = summary.totalOrders;
+                pendingOrders = summary.pendingOrders;
+                totalRevenue = summary.totalRevenue;
+                statusData = summary.statusData;
+                paymentData = summary.paymentData;
+                weeklyTicketData = summary.weeklyTicketData;
             }
         }
     } catch (error) {
@@ -67,7 +56,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ tena
 
     return (
         <div className="space-y-6">
-            <HeaderInfo title="Dashboard" description="Bem-vindo ao painel administrativo" />
+            <HeaderInfo title="Tela Inicial" description="Bem-vindo ao painel administrativo" />
 
             {/* Cards de Estatísticas */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -138,13 +127,22 @@ export default async function DashboardPage({ params }: { params: Promise<{ tena
             </div>
             <div className="grid gap-6 grid-cols-3">
                 <div className="col-span-1">
-                    <ChartBarMultiple />
+                    <ChartPaymentMethod data={paymentData} />
                 </div>
                 <div className="col-span-1">
-                    <ChartPieLabel />
+                    <ChartPieLabel data={statusData} />
                 </div>
-                <div className="col-span-1">
-                    <ChartAreaDefault />
+                <div className="col-span-1 flex flex-col">
+                    <ChartAreaDefault data={weeklyTicketData} />
+                    <div className="mt-2 text-right">
+                        <Link
+                            href={`/${tenantId}/reports`}
+                            className="text-xs text-primary hover:underline"
+                            aria-label="Ver mais dados em Relatórios"
+                        >
+                            Ver mais dados
+                        </Link>
+                    </div>
                 </div>
             </div>
         </div>

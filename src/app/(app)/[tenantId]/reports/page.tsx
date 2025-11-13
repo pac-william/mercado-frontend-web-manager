@@ -1,9 +1,54 @@
+import { getUserByAuth0Id } from "@/actions/user.actions";
+import { getReportsSummary } from "@/actions/reports.actions";
+import { ChartAreaDefault } from "@/app/components/charts/ChartAreaDefault";
+import { ChartPaymentMethod } from "@/app/components/charts/ChartPaymentMethod";
+import { ChartPieLabel } from "@/app/components/charts/ChartPieLabel";
+import { ChartRevenueDaily } from "@/app/components/charts/ChartRevenueDaily";
+import { ChartTopProducts } from "@/app/components/charts/ChartTopProducts";
 import { HeaderInfo } from "@/app/components/HeaderInfo";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Download, FileText } from "lucide-react";
+import { auth0 } from "@/lib/auth0";
+import { Download } from "lucide-react";
+import { redirect } from "next/navigation";
 
-export default function ReportsPage() {
+export default async function ReportsPage({ params }: { params: Promise<{ tenantId: string }> }) {
+    const { tenantId } = await params;
+    const session = await auth0.getSession();
+    if (!session) {
+        redirect('/auth/login');
+    }
+
+    const user = session.user;
+    const auth0Id = user?.sub || '';
+
+    let marketId: string | null = tenantId ?? null;
+
+    // datasets
+    let statusData: Array<{ status: string; pedidos: number }> = [];
+    let paymentData: Array<{ method: string; value: number }> = [];
+    let weeklyTicketData: Array<{ semana: string; ticket: number }> = [];
+    let revenueDailyData: Array<{ date: string; revenue: number }> = [];
+    let topProductsData: Array<{ name: string; quantity: number }> = [];
+
+    try {
+        if (auth0Id) {
+            const backendUser = await getUserByAuth0Id(auth0Id);
+            const userMarketId = backendUser.marketId;
+            if (userMarketId) {
+                marketId = userMarketId;
+            }
+
+            const summary = await getReportsSummary(marketId, { days: 30, weeks: 6, top: 5 });
+            statusData = summary.statusData;
+            paymentData = summary.paymentData;
+            weeklyTicketData = summary.weeklyTicketData;
+            revenueDailyData = summary.revenueDailyData;
+            topProductsData = summary.topProductsData;
+        }
+    } catch (error) {
+        console.error('Erro ao montar dados de relatórios:', error);
+    }
+
     return (
         <div className="space-y-6">
             <div className="flex flex-row items-center justify-between">
@@ -14,72 +59,13 @@ export default function ReportsPage() {
                 </Button>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <FileText className="h-5 w-5" />
-                            Relatório de Vendas
-                        </CardTitle>
-                        <CardDescription>
-                            Análise detalhada das vendas realizadas
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Button variant="outline" className="w-full">
-                            Visualizar
-                        </Button>
-                    </CardContent>
-                </Card>
-
-                <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <FileText className="h-5 w-5" />
-                            Relatório de Produtos
-                        </CardTitle>
-                        <CardDescription>
-                            Análise de produtos mais vendidos
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Button variant="outline" className="w-full">
-                            Visualizar
-                        </Button>
-                    </CardContent>
-                </Card>
-
-                <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <FileText className="h-5 w-5" />
-                            Relatório Financeiro
-                        </CardTitle>
-                        <CardDescription>
-                            Receitas, despesas e lucros
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Button variant="outline" className="w-full">
-                            Visualizar
-                        </Button>
-                    </CardContent>
-                </Card>
+            <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+                <ChartRevenueDaily data={revenueDailyData} />
+                <ChartPaymentMethod data={paymentData} />
+                <ChartPieLabel data={statusData} />
+                <ChartAreaDefault data={weeklyTicketData} title="Ticket médio semanal" subtitle="Últimas 6 semanas" />
+                <ChartTopProducts data={topProductsData} />
             </div>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>Relatórios Personalizados</CardTitle>
-                    <CardDescription>
-                        Gere relatórios personalizados com os dados que você precisa
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-muted-foreground">
-                        Esta funcionalidade será implementada em breve.
-                    </p>
-                </CardContent>
-            </Card>
         </div>
     );
 }
