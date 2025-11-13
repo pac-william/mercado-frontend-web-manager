@@ -73,7 +73,16 @@ export function ChartPieLabel({ data, title = "Status dos pedidos", subtitle = "
                 />
               }
             />
-            <Pie data={data.map(d => ({ fill: d.fill, status: d.status, pedidos: d.pedidos }))} dataKey="pedidos" label nameKey="status" />
+            <Pie 
+              data={data.map(d => ({ 
+                fill: d.fill || `var(--color-${d.status})`, 
+                status: d.status, 
+                pedidos: d.pedidos 
+              }))} 
+              dataKey="pedidos" 
+              label 
+              nameKey="status"
+            />
           </PieChart>
         </ChartContainer>
       </CardContent>
