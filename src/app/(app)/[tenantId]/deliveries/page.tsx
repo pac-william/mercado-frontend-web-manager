@@ -1,32 +1,24 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShoppingCart } from "lucide-react";
+import RouterBack from "@/components/RouterBack";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { DeliverySettingsForm } from "./components/DeliverySettingsForm";
 
-export default function DeliveriesPage() {
+interface DeliveriesPageProps {
+    params: Promise<{ tenantId: string }>;
+}
+
+export default async function DeliveriesPage({ params }: DeliveriesPageProps) {
+    const { tenantId } = await params;
+
     return (
-        <div className="space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">Entrega</h1>
-                <p className="text-muted-foreground">
-                    Gerencie os pedidos e entregas do seu mercado
-                </p>
-            </div>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <ShoppingCart className="h-5 w-5" />
-                        Pedidos e Entregas
-                    </CardTitle>
-                    <CardDescription>
-                        Visualize e gerencie todos os pedidos pendentes de entrega
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-muted-foreground">
-                        Esta página será implementada em breve.
-                    </p>
-                </CardContent>
-            </Card>
+        <div className="flex flex-col flex-1">
+            <ScrollArea className="flex flex-col flex-grow h-0">
+                <div className="flex flex-1 flex-col gap-4 container mx-auto my-4 mb-[120px]">
+                    <RouterBack />
+                    <div className="flex justify-center">
+                        <DeliverySettingsForm tenantId={tenantId} />
+                    </div>
+                </div>
+            </ScrollArea>
         </div>
     );
 }

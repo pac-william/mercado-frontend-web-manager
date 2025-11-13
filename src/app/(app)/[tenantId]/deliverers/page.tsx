@@ -1,40 +1,55 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { getDeliverers } from "@/actions/deliverer.actions";
+import RouterBack from "@/components/RouterBack";
 import { Button } from "@/components/ui/button";
-import { Truck, Plus } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import Link from "next/link";
+import { Plus } from "lucide-react";
+import DelivererCardAdmin from "./components/DelivererCardAdmin";
 
-export default function DeliverersPage() {
+interface DeliverersPageProps {
+    params: Promise<{ tenantId: string }>;
+    searchParams: Promise<{ page?: string; size?: string; status?: string }>;
+}
+
+export default async function DeliverersPage({ params, searchParams }: DeliverersPageProps) {
+    const { tenantId } = await params;
+    const { page, size, status } = await searchParams;
+
+    const { deliverers } = await getDeliverers({
+        page: Number(page) || 1,
+        size: Number(size) || 10,
+        status: status,
+    });
+
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Entregadores</h1>
-                    <p className="text-muted-foreground">
-                        Gerencie os entregadores cadastrados no seu mercado
-                    </p>
+        <ScrollArea className="flex flex-col flex-grow h-0">
+            <div className="flex flex-1 flex-col gap-4 pr-4">
+                <RouterBack />
+                <div className="flex flex-row gap-4 items-center justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold">Entregadores</h1>
+                        <p className="text-sm text-muted-foreground">
+                            Gerencie os entregadores cadastrados
+                        </p>
+                    </div>
+                    <Button asChild>
+                        <Link href={`/${tenantId}/deliverers/create`}>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Cadastrar Entregador
+                        </Link>
+                    </Button>
                 </div>
-                <Button>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Adicionar Entregador
-                </Button>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 justify-items-center">
+                    {deliverers.map((deliverer) => (
+                        <DelivererCardAdmin 
+                            key={deliverer.id} 
+                            deliverer={deliverer} 
+                            tenantId={tenantId}
+                        />
+                    ))}
+                </div>
             </div>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Truck className="h-5 w-5" />
-                        Lista de Entregadores
-                    </CardTitle>
-                    <CardDescription>
-                        Visualize e gerencie os entregadores disponíveis
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-muted-foreground">
-                        Esta página será implementada em breve.
-                    </p>
-                </CardContent>
-            </Card>
-        </div>
+        </ScrollArea>
     );
 }
 

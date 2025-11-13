@@ -1,5 +1,7 @@
 import { auth0 } from "@/lib/auth0";
 import { redirect } from "next/navigation";
+import { LoadingProvider } from "@/contexts/LoadingContext";
+import NavigationLoading from "@/components/NavigationLoading";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
     const session = await auth0.getSession();
@@ -9,8 +11,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     }
     
     return (
-        <div>
-            {children}
-        </div>
+        <LoadingProvider>
+            <div>
+                {children}
+            </div>
+            <NavigationLoading />
+        </LoadingProvider>
     )
 }

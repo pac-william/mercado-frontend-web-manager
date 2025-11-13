@@ -27,9 +27,11 @@ export const getMarkets = async (filters?: GetMarketsFilters) => {
             managersIds: filters?.managersIds,
         });
 
-        const response = await fetch(`${baseUrl}/api/v1/markets?${params.toString()}`, {
+        const url = params.toString() ? `${baseUrl}/api/v1/markets?${params.toString()}` : `${baseUrl}/api/v1/markets`;
+        const response = await fetch(url, {
             cache: 'no-store',
         });
+
         
         if (!response.ok) {
             throw new Error('Erro ao buscar mercados');
