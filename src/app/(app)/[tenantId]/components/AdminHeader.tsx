@@ -8,20 +8,23 @@ import { usePathname } from "next/navigation";
 
 export default function AdminHeader() {
     const pathname = usePathname();
-    const isInAdmin = pathname?.startsWith('/admin');
+    const segments = pathname?.split("/").filter(Boolean) ?? [];
+    const tenantSegment = segments[0];
+    const tenantBasePath = tenantSegment ? `/${tenantSegment}` : "/";
+    const isTenantRoute = Boolean(tenantSegment);
 
     return (
         <header className="bg-background border-b border-border">
             <div className="container mx-auto flex items-center gap-4 p-4">
                 <SidebarTrigger className="-ml-2 md:hidden" />
                 <Link
-                    href="/admin"
+                    href={tenantSegment ? `${tenantBasePath}/dashboard` : "/"}
                     className="text-2xl font-bold text-foreground hover:text-primary"
                 >
                     Smart Market Admin
                 </Link>
                 <div className="ml-auto flex flex-row gap-2 items-center">
-                    {isInAdmin ? (
+                    {isTenantRoute ? (
                         <Button variant="ghost" size="sm" asChild>
                             <Link href="/" className="flex items-center gap-2">
                                 <Home className="h-4 w-4" />
@@ -31,7 +34,7 @@ export default function AdminHeader() {
                     ) : (
                         <Button variant="ghost" size="sm" asChild>
                             <Link
-                                href="/admin/dashboard"
+                                href="/auth/login"
                                 className="flex items-center gap-2"
                             >
                                 <LayoutDashboard className="h-4 w-4" />

@@ -16,7 +16,7 @@ import { useCallback, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { useRouter } from "next/navigation";
+import { useNavigationWithLoading } from "@/hooks/useNavigationWithLoading";
 
 interface ProductCreateFormProps {
     tenantId: string;
@@ -24,7 +24,7 @@ interface ProductCreateFormProps {
 }
 
 export const ProductCreateForm = ({tenantId, categories}: ProductCreateFormProps) => {
-    const router = useRouter();
+    const { navigate } = useNavigationWithLoading();
     const [productImage, setProductImage] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -76,7 +76,7 @@ export const ProductCreateForm = ({tenantId, categories}: ProductCreateFormProps
         try {
             await createProduct(productData);
             toast.success("Produto cadastrado com sucesso");
-            router.push(`/${tenantId}/products`);
+            navigate(`/${tenantId}/products`, "Redirecionando...");
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : "Erro ao cadastrar produto";
             toast.error(errorMessage);
