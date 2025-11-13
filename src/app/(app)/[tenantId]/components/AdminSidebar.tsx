@@ -15,6 +15,7 @@ import {
     Home,
     LayoutDashboard,
     Package,
+    Settings,
     ShoppingCart,
     Truck,
     Users
@@ -67,6 +68,11 @@ export default function AdminSidebar({ tenantId }: AdminSidebarProps) {
             href: `/${tenantId}/reports`,
             icon: FileText,
         },
+        {
+            title: "Configurações",
+            href: `/${tenantId}/settings`,
+            icon: Settings,
+        }
     ];
 
     const pathname = usePathname();

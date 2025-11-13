@@ -10,8 +10,8 @@ import { DollarSign, Package, Plus, Settings, ShoppingCart, Store, TrendingUp } 
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-export default async function DashboardPage({ params }: { params: { tenantId: string } }) {
-    const { tenantId } = params;
+export default async function DashboardPage({ params }: { params: Promise<{ tenantId: string }> }) {
+    const { tenantId } = await params;
     const session = await auth0.getSession();
     
     if (!session) {

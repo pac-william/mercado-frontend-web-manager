@@ -1,8 +1,7 @@
-import bh_supermercados from "@/../public/markets/bh_supermercados.png";
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { auth0 } from "@/lib/auth0";
 import { SessionData, User } from "@auth0/nextjs-auth0/types";
-import Image from "next/image";
 import { Market } from "../domain/marketDomain";
 import AuthButtons from "./AuthButtons";
 import { ProfileMenuDropDown } from "./ProfileMenuDropDown";
@@ -18,7 +17,14 @@ export default async function Header({ market }: HeaderProps) {
         <header className="flex w-full justify-between items-center p-4 bg-background border-b border-border">
             <div className="grid grid-cols-3 gap-4 w-full items-center">
                 <div className="flex flex-row gap-2">
-                    <Image src={bh_supermercados} alt="Product" width={100} height={100} className="object-cover rounded-full aspect-square w-12 h-12 shadow-md border" />
+                    <Avatar className="h-12 w-12 border shadow-md">
+                        {market.profilePicture ? (
+                            <AvatarImage src={market.profilePicture} alt={market.name} />
+                        ) : null}
+                        <AvatarFallback className="text-sm font-medium">
+                            {market.name?.charAt(0)?.toUpperCase() ?? "M"}
+                        </AvatarFallback>
+                    </Avatar>
                     <div className="rounded-full flex flex-col gap-2">
                         <div className="flex flex-col">
                             <span className="text-sm font-bold text-card-foreground">{market.name}</span>
