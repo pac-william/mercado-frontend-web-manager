@@ -1,8 +1,9 @@
 "use client"
 
-import { createProduct, updateProduct, getProductById } from "@/actions/products.actions";
+import { createProduct, getProductById, updateProduct } from "@/actions/products.actions";
 import { Category } from "@/app/domain/categoryDomain";
 import CropperZoomSlider from "@/components/cropper-zoom-slider";
+import ProductLivePreview from "@/components/product-live-preview";
 import SingleImageUploader from "@/components/single-image-uploader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,11 +14,11 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { ProductDTO } from "@/dtos/productDTO";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useState, useEffect } from "react";
+import { Image as ImageIcon, XIcon } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { useNavigationWithLoading } from "@/hooks/useNavigationWithLoading";
 
 interface ProductCreateFormProps {
     tenantId: string;
@@ -25,9 +26,12 @@ interface ProductCreateFormProps {
     productId?: string;
 }
 
-export const ProductCreateForm = ({tenantId, categories, productId}: ProductCreateFormProps) => {
-    const { navigate } = useNavigationWithLoading();
+type CropArea = { x: number; y: number; width: number; height: number }
+
+export const ProductCreateForm = ({ tenantId, categories, productId }: ProductCreateFormProps) => {
     const [productImage, setProductImage] = useState<string | null>(null);
+    const [cropZoom, setCropZoom] = useState(1);
+    const [cropArea, setCropArea] = useState<CropArea | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const isEditing = Boolean(productId);
@@ -72,6 +76,16 @@ export const ProductCreateForm = ({tenantId, categories, productId}: ProductCrea
 
     const handleSetProductImage = useCallback((image: string) => {
         setProductImage(image);
+        setCropZoom(1);
+        setCropArea(null);
+    }, []);
+
+    const handleCropChange = useCallback((crop: CropArea | null) => {
+        setCropArea(crop);
+    }, []);
+
+    const handleZoomChange = useCallback((zoom: number) => {
+        setCropZoom(zoom);
     }, []);
 
     async function onSubmit(values: z.infer<typeof ProductDTO>) {
@@ -108,14 +122,30 @@ export const ProductCreateForm = ({tenantId, categories, productId}: ProductCrea
             if (isEditing && productId) {
                 await updateProduct(productId, productData);
                 toast.success("Produto atualizado com sucesso");
+                // Limpar estados após atualização
+                setCropArea(null);
+                setCropZoom(1);
             } else {
                 await createProduct(productData);
                 toast.success("Produto cadastrado com sucesso");
+                // Limpar tudo após criação
+                form.reset({
+                    name: "",
+                    price: 0,
+                    categoryId: "",
+                    sku: "",
+                    marketId: tenantId,
+                    isActive: true,
+                });
+                setProductImage(null);
+                setCropArea(null);
+                setCropZoom(1);
             }
-            navigate(`/${tenantId}/products`, "Redirecionando...");
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : isEditing ? "Erro ao atualizar produto" : "Erro ao cadastrar produto";
             toast.error(errorMessage);
+            setIsSubmitting(false);
+        } finally {
             setIsSubmitting(false);
         }
     }
@@ -131,23 +161,36 @@ export const ProductCreateForm = ({tenantId, categories, productId}: ProductCrea
     }
 
     return (
-        <Card className="max-w-3xl mx-auto">
-            <CardHeader>
-                <CardTitle>{isEditing ? "Editar Produto" : "Cadastro de Produto"}</CardTitle>
-            </CardHeader>
-            <Separator />
-            <CardContent className="pt-6">
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)}>
-                        <div className="grid grid-cols-[auto_1fr] gap-6 items-start">
-                            <div className="flex-shrink-0">
+        <div className="grid gap-6 grid-cols-12">
+            <Card className="2xl:col-span-9 xl:col-span-8 lg:col-span-7 md:col-span-6 sm:col-span-5">
+                <CardHeader>
+                    <CardTitle>{isEditing ? "Editar Produto" : "Cadastro de Produto"}</CardTitle>
+                </CardHeader>
+                <Separator />
+                <CardContent className="pt-6">
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="flex xl:flex-row flex-col gap-6">
+                            <div className="space-y-4">
                                 {productImage ? (
-                                    <CropperZoomSlider image={productImage} />
+                                    <div className="space-y-4">
+                                        <CropperZoomSlider
+                                            image={productImage}
+                                            onCropChange={handleCropChange}
+                                            onZoomChange={handleZoomChange}
+                                        />
+                                        <Card className="flex flex-row items-center p-2 gap-2">
+                                            <ImageIcon size={16} />
+                                            <span className="text-xs text-muted-foreground">{productImage.split("/").pop()}</span>
+                                            <Button variant="ghost" className="ml-auto" size="icon_xs" onClick={() => setProductImage(null)}>
+                                                <XIcon size={16} />
+                                            </Button>
+                                        </Card>
+                                    </div>
                                 ) : (
                                     <SingleImageUploader onImageChange={handleSetProductImage} />
                                 )}
                             </div>
-                            <div className="flex flex-col gap-4">
+                            <div className="flex flex-col gap-4 flex-1">
                                 <FormField
                                     control={form.control}
                                     name="name"
@@ -167,10 +210,7 @@ export const ProductCreateForm = ({tenantId, categories, productId}: ProductCrea
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Categoria</FormLabel>
-                                            <Select
-                                                onValueChange={field.onChange}
-                                                value={field.value}
-                                            >
+                                            <Select onValueChange={field.onChange} value={field.value}>
                                                 <FormControl>
                                                     <SelectTrigger>
                                                         <SelectValue placeholder="Selecione a categoria" />
@@ -188,7 +228,7 @@ export const ProductCreateForm = ({tenantId, categories, productId}: ProductCrea
                                         </FormItem>
                                     )}
                                 />
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid gap-4 sm:grid-cols-2">
                                     <FormField
                                         control={form.control}
                                         name="price"
@@ -222,10 +262,7 @@ export const ProductCreateForm = ({tenantId, categories, productId}: ProductCrea
                                             <FormItem>
                                                 <FormLabel>SKU (opcional)</FormLabel>
                                                 <FormControl>
-                                                    <Input
-                                                        placeholder="Código interno"
-                                                        {...field}
-                                                    />
+                                                    <Input placeholder="Código interno" {...field} />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -238,36 +275,43 @@ export const ProductCreateForm = ({tenantId, categories, productId}: ProductCrea
                                     render={({ field }) => (
                                         <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                                             <div className="space-y-0.5">
-                                                <FormLabel className="text-base">
-                                                    Produto ativo
-                                                </FormLabel>
+                                                <FormLabel className="text-base">Produto ativo</FormLabel>
                                                 <div className="text-sm text-muted-foreground">
                                                     {field.value ? "Produto visível para clientes" : "Produto oculto"}
                                                 </div>
                                             </div>
                                             <FormControl>
-                                                <Switch
-                                                    checked={field.value ?? true}
-                                                    onCheckedChange={field.onChange}
-                                                />
+                                                <Switch checked={field.value ?? true} onCheckedChange={field.onChange} />
                                             </FormControl>
                                         </FormItem>
                                     )}
                                 />
-                                <div className="flex justify-end pt-2">
-                                    <Button
-                                        type="submit"
-                                        className="min-w-[120px]"
-                                        disabled={isSubmitting}
-                                    >
+                                <div className="flex justify-end">
+                                    <Button type="submit" className="min-w-[120px]" disabled={isSubmitting}>
                                         {isSubmitting ? "Salvando..." : isEditing ? "Salvar alterações" : "Cadastrar"}
                                     </Button>
                                 </div>
                             </div>
-                        </div>
-                    </form>
-                </Form>
-            </CardContent>
-        </Card >
+
+                        </form>
+                    </Form>
+                </CardContent>
+            </Card>
+
+            <div className="2xl:col-span-3 xl:col-span-4 lg:col-span-5 md:col-span-6 sm:col-span-7">
+                <ProductLivePreview
+                    name={form.watch("name")}
+                    price={Number(form.watch("price")) || 0}
+                    sku={form.watch("sku")}
+                    categoryName={
+                        categories.find((category) => category.id === form.watch("categoryId"))?.name ?? "Categoria selecionada"
+                    }
+                    isActive={form.watch("isActive") ?? true}
+                    imageUrl={productImage ?? undefined}
+                    zoom={cropZoom}
+                    cropArea={cropArea}
+                />
+            </div>
+        </div>
     )
 }

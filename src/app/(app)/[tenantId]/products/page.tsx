@@ -4,6 +4,7 @@ import { HeaderInfo } from "@/app/components/HeaderInfo";
 import MultiSelect from "@/components/MultiSelect";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Plus } from "lucide-react";
 import Link from "next/link";
 import ProductCardAdmin from "./components/ProductCardAdmin";
 
@@ -33,12 +34,13 @@ export default async function Products({ searchParams, params }: { searchParams:
     const { categories } = await getCategories({ size: 100 });
 
     return (
-        <ScrollArea className="flex flex-col flex-grow h-0">
+        <ScrollArea className="flex flex-col flex-grow h-0 overflow-y-auto pr-4">
             <div className="flex flex-1 flex-col gap-4 pr-4">
                 <div className="flex flex-row items-center justify-between">
                     <HeaderInfo title="Produtos" description="Gerencie os produtos cadastrados" />
                     <Button asChild>
                         <Link href={`/${tenantId}/products/create`}>
+                            <Plus size={16} />
                             Cadastrar Produto
                         </Link>
                     </Button>

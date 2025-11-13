@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 
 import {
   Cropper,
@@ -10,13 +10,35 @@ import {
 } from "@/components/ui/cropper"
 import { Slider } from "@/components/ui/slider"
 
-export default function CropperZoomSlider({ image }: { image: string }) {
+type Area = { x: number; y: number; width: number; height: number }
+
+type CropperZoomSliderProps = {
+  image: string
+  onCropChange?: (crop: Area | null) => void
+  onZoomChange?: (zoom: number) => void
+}
+
+export default function CropperZoomSlider({ 
+  image, 
+  onCropChange,
+  onZoomChange 
+}: CropperZoomSliderProps) {
   const [zoom, setZoom] = useState(1)
 
   // Reset zoom when image changes
   useEffect(() => {
     setZoom(1)
-  }, [image])
+    onCropChange?.(null)
+  }, [image, onCropChange])
+
+  const handleZoomChange = useCallback((newZoom: number) => {
+    setZoom(newZoom)
+    onZoomChange?.(newZoom)
+  }, [onZoomChange])
+
+  const handleCropChange = useCallback((pixels: Area | null) => {
+    onCropChange?.(pixels)
+  }, [onCropChange])
 
   return (
     <div className="flex flex-col items-center gap-2">
@@ -24,7 +46,8 @@ export default function CropperZoomSlider({ image }: { image: string }) {
         className="h-80 w-80"
         image={image}
         zoom={zoom}
-        onZoomChange={setZoom}
+        onZoomChange={handleZoomChange}
+        onCropChange={handleCropChange}
       >
         <CropperDescription />
         <CropperImage />
@@ -37,7 +60,7 @@ export default function CropperZoomSlider({ image }: { image: string }) {
           min={1}
           max={3}
           step={0.1}
-          onValueChange={(value) => setZoom(value[0])}
+          onValueChange={(value) => handleZoomChange(value[0])}
           aria-label="Zoom slider"
         />
         <output className="block w-10 shrink-0 text-right text-sm font-medium tabular-nums">
