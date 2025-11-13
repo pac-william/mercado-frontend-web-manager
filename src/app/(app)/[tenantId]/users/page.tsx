@@ -1,15 +1,11 @@
+import { HeaderInfo } from "@/app/components/HeaderInfo";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users } from "lucide-react";
 
 export default function UsersPage() {
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">Usuários</h1>
-                <p className="text-muted-foreground">
-                    Gerencie os usuários do sistema
-                </p>
-            </div>
+            <HeaderInfo title="Usuários" description="Gerencie os usuários do sistema" />
 
             <Card>
                 <CardHeader>

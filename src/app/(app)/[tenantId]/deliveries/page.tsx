@@ -1,4 +1,4 @@
-import RouterBack from "@/components/RouterBack";
+import { HeaderInfo } from "@/app/components/HeaderInfo";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { DeliverySettingsForm } from "./components/DeliverySettingsForm";
 
@@ -12,11 +12,9 @@ export default async function DeliveriesPage({ params }: DeliveriesPageProps) {
     return (
         <div className="flex flex-col flex-1">
             <ScrollArea className="flex flex-col flex-grow h-0">
-                <div className="flex flex-1 flex-col gap-4 container mx-auto my-4 mb-[120px]">
-                    <RouterBack />
-                    <div className="flex justify-center">
-                        <DeliverySettingsForm tenantId={tenantId} />
-                    </div>
+                <HeaderInfo title="Entregas" description="Gerencie as entregas cadastradas" />
+                <div className="flex justify-center">
+                    <DeliverySettingsForm tenantId={tenantId} />
                 </div>
             </ScrollArea>
         </div>

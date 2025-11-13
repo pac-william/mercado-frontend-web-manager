@@ -4,6 +4,7 @@ import { getUserByAuth0Id } from "@/actions/user.actions";
 import { ChartAreaDefault } from "@/app/components/charts/ChartAreaDefault";
 import { ChartBarMultiple } from "@/app/components/charts/ChartBarMultiple";
 import { ChartPieLabel } from "@/app/components/charts/ChartPieLabel";
+import { HeaderInfo } from "@/app/components/HeaderInfo";
 import { Order } from "@/app/domain/orderDomain";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { auth0 } from "@/lib/auth0";
@@ -66,14 +67,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ tena
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-                    <p className="text-muted-foreground">
-                        Bem-vindo ao painel administrativo
-                    </p>
-                </div>
-            </div>
+            <HeaderInfo title="Dashboard" description="Bem-vindo ao painel administrativo" />
 
             {/* Cards de Estatísticas */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

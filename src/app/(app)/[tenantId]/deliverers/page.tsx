@@ -1,9 +1,9 @@
 import { getDeliverers } from "@/actions/deliverer.actions";
-import RouterBack from "@/components/RouterBack";
+import { HeaderInfo } from "@/app/components/HeaderInfo";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import Link from "next/link";
 import { Plus } from "lucide-react";
+import Link from "next/link";
 import DelivererCardAdmin from "./components/DelivererCardAdmin";
 
 interface DeliverersPageProps {
@@ -24,14 +24,8 @@ export default async function DeliverersPage({ params, searchParams }: Deliverer
     return (
         <ScrollArea className="flex flex-col flex-grow h-0">
             <div className="flex flex-1 flex-col gap-4 pr-4">
-                <RouterBack />
                 <div className="flex flex-row gap-4 items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-bold">Entregadores</h1>
-                        <p className="text-sm text-muted-foreground">
-                            Gerencie os entregadores cadastrados
-                        </p>
-                    </div>
+                    <HeaderInfo title="Entregadores" description="Gerencie os entregadores cadastrados" />
                     <Button asChild>
                         <Link href={`/${tenantId}/deliverers/create`}>
                             <Plus className="mr-2 h-4 w-4" />

@@ -1,17 +1,13 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Download } from "lucide-react";
+import { HeaderInfo } from "@/app/components/HeaderInfo";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Download, FileText } from "lucide-react";
 
 export default function ReportsPage() {
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Relatórios</h1>
-                    <p className="text-muted-foreground">
-                        Visualize relatórios e análises do seu mercado
-                    </p>
-                </div>
+            <div className="flex flex-row items-center justify-between">
+                <HeaderInfo title="Relatórios" description="Visualize relatórios e análises do seu mercado" />
                 <Button>
                     <Download className="mr-2 h-4 w-4" />
                     Exportar Relatório

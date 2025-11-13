@@ -1,3 +1,4 @@
+import { HeaderInfo } from "@/app/components/HeaderInfo"
 import { SupportChat } from "./components/SupportChat"
 
 type SupportPageParams = {
@@ -13,15 +14,11 @@ export default async function SupportPage({ params }: SupportPageProps) {
 
     return (
         <section className="space-y-6">
-            <header className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tight">Atendimento ao Cliente</h1>
-                <p className="text-muted-foreground">
-                    Monitore conversas e responda clientes em tempo real. Todas as interações do mercado <span className="font-semibold">{tenantId}</span> ficam centralizadas aqui.
-                </p>
-            </header>
-
-            <SupportChat />
-        </section>
+            <HeaderInfo title="Atendimento ao Cliente" description={`Monitore conversas e responda clientes em tempo real. Todas as interações do mercado <span className="font-semibold">${tenantId}</span> ficam centralizadas aqui.`} />
+            <div className="flex justify-center">
+                <SupportChat />
+            </div>
+        </section >
     )
 }
 

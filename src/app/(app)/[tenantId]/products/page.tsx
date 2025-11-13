@@ -1,7 +1,7 @@
 import { getCategories } from "@/actions/categories.actions";
 import { getProducts } from "@/actions/products.actions";
+import { HeaderInfo } from "@/app/components/HeaderInfo";
 import MultiSelect from "@/components/MultiSelect";
-import RouterBack from "@/components/RouterBack";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import Link from "next/link";
@@ -35,17 +35,19 @@ export default async function Products({ searchParams, params }: { searchParams:
     return (
         <ScrollArea className="flex flex-col flex-grow h-0">
             <div className="flex flex-1 flex-col gap-4 pr-4">
-                <RouterBack />
-                <div className="flex flex-row gap-4 items-center justify-between">
-                    <MultiSelect marketId={tenantId} options={categories.map((category) => ({
-                        label: category.name,
-                        value: category.id,
-                    }))} label="Categorias" placeholder="Selecione as categorias" emptyIndicator="Nenhuma categoria encontrada" />
+                <div className="flex flex-row items-center justify-between">
+                    <HeaderInfo title="Produtos" description="Gerencie os produtos cadastrados" />
                     <Button asChild>
                         <Link href={`/${tenantId}/products/create`}>
                             Cadastrar Produto
                         </Link>
                     </Button>
+                </div>
+                <div className="flex flex-row gap-4 items-center justify-between">
+                    <MultiSelect marketId={tenantId} options={categories.map((category) => ({
+                        label: category.name,
+                        value: category.id,
+                    }))} label="Categorias" placeholder="Selecione as categorias" emptyIndicator="Nenhuma categoria encontrada" />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 justify-items-center">
                     {products.map((product) => (
