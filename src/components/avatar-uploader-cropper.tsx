@@ -1,6 +1,5 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
 import {
   ArrowLeftIcon,
   CircleUserRoundIcon,
@@ -8,8 +7,8 @@ import {
   ZoomInIcon,
   ZoomOutIcon,
 } from "lucide-react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
-import { useFileUpload } from "@/hooks/use-file-upload"
 import { Button } from "@/components/ui/button"
 import {
   Cropper,
@@ -26,6 +25,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Slider } from "@/components/ui/slider"
+import { useFileUpload } from "@/hooks/use-file-upload"
 
 // Define type for pixel crop area
 type Area = { x: number; y: number; width: number; height: number }
@@ -84,7 +84,7 @@ async function getCroppedImg(
   }
 }
 
-export default function Component() {
+export default function AvatarUploaderCropper() {
   const [
     { files, isDragging },
     {
