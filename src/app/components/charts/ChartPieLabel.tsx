@@ -20,7 +20,9 @@ import {
 
 export const description = "Distribuição de pedidos por status"
 
-const chartData = [
+type StatusPoint = { status: string; pedidos: number; fill?: string }
+
+const defaultChartData: StatusPoint[] = [
   { status: "Entregues", pedidos: 186, fill: "var(--color-Entregues)" },
   { status: "Preparando", pedidos: 44, fill: "var(--color-Preparando)" },
   { status: "Confirmados", pedidos: 28, fill: "var(--color-Confirmados)" },
@@ -54,12 +56,12 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-export function ChartPieLabel() {
+export function ChartPieLabel({ data, title = "Status dos pedidos", subtitle = "Últimos 30 dias" }: { data?: StatusPoint[]; title?: string; subtitle?: string }) {
   return (
     <Card className="flex flex-col flex-1 h-full">
       <CardHeader className="items-center pb-0">
-        <CardTitle>Status dos pedidos</CardTitle>
-        <CardDescription>Últimos 30 dias</CardDescription>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>{subtitle}</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pb-0">
         <ChartContainer
@@ -79,7 +81,7 @@ export function ChartPieLabel() {
                 />
               }
             />
-            <Pie data={chartData} dataKey="pedidos" label nameKey="status" />
+            <Pie data={(data && data.length > 0 ? data : defaultChartData).map(d => ({ fill: d.fill, status: d.status, pedidos: d.pedidos }))} dataKey="pedidos" label nameKey="status" />
           </PieChart>
         </ChartContainer>
       </CardContent>
