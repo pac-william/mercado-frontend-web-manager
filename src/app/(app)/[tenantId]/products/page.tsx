@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatPrice } from "@/app/utils/formatters";
 import Image from "next/image";
 import Link from "next/link";
+import { Pencil } from "lucide-react";
 
 interface ProductsSearchParams {
     page?: string;
@@ -73,6 +74,16 @@ export default async function Products({ searchParams, params }: { searchParams:
                             <CardContent className="flex flex-col gap-2">
                                 <div className="flex flex-row items-center justify-between">
                                     <span className="text-lg font-bold">{formatPrice(product.price)}</span>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        asChild
+                                        className="h-8 w-8"
+                                    >
+                                        <Link href={`/${tenantId}/products/create?productId=${product.id}`}>
+                                            <Pencil className="h-4 w-4" />
+                                        </Link>
+                                    </Button>
                                 </div>
                                 {product.sku && (
                                     <span className="text-xs text-muted-foreground">SKU: {product.sku}</span>
