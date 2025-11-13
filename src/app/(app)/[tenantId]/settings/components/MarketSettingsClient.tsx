@@ -34,7 +34,6 @@ import {
 } from "@/components/ui/dialog"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
@@ -330,215 +329,202 @@ export function MarketSettingsClient({ tenantId, initialMarket }: MarketSettings
     )
 
     return (
-        <div className="flex flex-1 flex-col">
-            <ScrollArea className="flex flex-grow flex-col h-0 overflow-y-auto">
-                <div className="flex flex-col gap-6">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-3xl font-bold tracking-tight">Configurações do Mercado</h1>
-                            <p className="text-muted-foreground">
-                                Gerencie as informações gerais e a identidade visual do seu mercado.
-                            </p>
+        <>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Informações Gerais</CardTitle>
+                    <CardDescription>
+                        Atualize os dados exibidos para os seus clientes.
+                    </CardDescription>
+                </CardHeader>
+                <Separator />
+                <CardContent className="flex flex-col gap-4 pt-6 space-y-6">
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="relative inline-flex">
+                            <button
+                                type="button"
+                                className="relative flex cursor-pointer size-24 items-center justify-center overflow-hidden rounded-full border border-dashed border-input transition-colors outline-none hover:bg-accent/50 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 has-disabled:pointer-events-none has-disabled:opacity-50 has-[img]:border-none data-[dragging=true]:bg-accent/50"
+                                onClick={openFileDialog}
+                                onDragEnter={handleDragEnter}
+                                onDragLeave={handleDragLeave}
+                                onDragOver={handleDragOver}
+                                onDrop={handleDrop}
+                                data-dragging={isDragging || undefined}
+                                aria-label={finalImageUrl ? "Alterar imagem" : "Enviar imagem"}
+                                disabled={isSaving}
+                            >
+                                {finalImageUrl ? (
+                                    <NextImage
+                                        src={finalImageUrl}
+                                        alt="Logo do mercado"
+                                        width={96}
+                                        height={96}
+                                        className="size-full object-cover"
+                                        unoptimized
+                                    />
+                                ) : (
+                                    <CircleUserRoundIcon className="size-6 opacity-60" aria-hidden="true" />
+                                )}
+                            </button>
+
+                            {finalImageUrl && (
+                                <Button
+                                    type="button"
+                                    onClick={handleRemoveFinalImage}
+                                    size="icon"
+                                    variant="secondary"
+                                    className="absolute -top-1 -right-1 size-6 rounded-full border-2 border-background shadow-none focus-visible:border-background"
+                                    aria-label="Remover imagem"
+                                    disabled={isSaving}
+                                >
+                                    <XIcon className="size-3.5" aria-hidden="true" />
+                                </Button>
+                            )}
+
+                            <input
+                                {...getInputProps()}
+                                className="sr-only"
+                                aria-label="Upload de imagem"
+                                tabIndex={-1}
+                                disabled={isSaving}
+                            />
                         </div>
+
+                        <p className="text-xs text-muted-foreground">
+                            Formatos aceitos: JPG ou PNG até 5MB.
+                        </p>
                     </div>
-
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Informações Gerais</CardTitle>
-                            <CardDescription>
-                                Atualize os dados exibidos para os seus clientes.
-                            </CardDescription>
-                        </CardHeader>
-                        <Separator />
-                        <CardContent className="flex flex-col gap-4 pt-6 space-y-6">
-                            <div className="flex flex-col items-center gap-4">
-                                <div className="relative inline-flex">
-                                    <button
-                                        type="button"
-                                        className="relative flex size-24 items-center justify-center overflow-hidden rounded-full border border-dashed border-input transition-colors outline-none hover:bg-accent/50 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 has-disabled:pointer-events-none has-disabled:opacity-50 has-[img]:border-none data-[dragging=true]:bg-accent/50"
-                                        onClick={openFileDialog}
-                                        onDragEnter={handleDragEnter}
-                                        onDragLeave={handleDragLeave}
-                                        onDragOver={handleDragOver}
-                                        onDrop={handleDrop}
-                                        data-dragging={isDragging || undefined}
-                                        aria-label={finalImageUrl ? "Alterar imagem" : "Enviar imagem"}
-                                        disabled={isSaving}
-                                    >
-                                        {finalImageUrl ? (
-                                            <NextImage
-                                                src={finalImageUrl}
-                                                alt="Logo do mercado"
-                                                width={96}
-                                                height={96}
-                                                className="size-full object-cover"
-                                                unoptimized
-                                            />
-                                        ) : (
-                                            <CircleUserRoundIcon className="size-6 opacity-60" aria-hidden="true" />
-                                        )}
-                                    </button>
-
-                                    {finalImageUrl && (
-                                        <Button
-                                            type="button"
-                                            onClick={handleRemoveFinalImage}
-                                            size="icon"
-                                            variant="secondary"
-                                            className="absolute -top-1 -right-1 size-6 rounded-full border-2 border-background shadow-none focus-visible:border-background"
-                                            aria-label="Remover imagem"
-                                            disabled={isSaving}
-                                        >
-                                            <XIcon className="size-3.5" aria-hidden="true" />
-                                        </Button>
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-6">
+                            <div className="grid gap-4 md:grid-cols-2">
+                                <FormField
+                                    control={form.control}
+                                    name="name"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Nome do mercado</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    placeholder="Ex.: Supermercado Central"
+                                                    disabled={isSaving}
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
                                     )}
+                                />
 
-                                    <input
-                                        {...getInputProps()}
-                                        className="sr-only"
-                                        aria-label="Upload de imagem"
-                                        tabIndex={-1}
-                                        disabled={isSaving}
-                                    />
-                                </div>
-
-                                <p className="text-xs text-muted-foreground">
-                                    Formatos aceitos: JPG ou PNG até 5MB.
-                                </p>
+                                <FormField
+                                    control={form.control}
+                                    name="address"
+                                    render={({ field }) => (
+                                        <FormItem className="md:col-span-1">
+                                            <FormLabel>Endereço</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    placeholder="Rua, número, bairro, cidade"
+                                                    disabled={isSaving}
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
                             </div>
-                            <Form {...form}>
-                                <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-6">
-                                    <div className="grid gap-4 md:grid-cols-2">
-                                        <FormField
-                                            control={form.control}
-                                            name="name"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Nome do mercado</FormLabel>
-                                                    <FormControl>
-                                                        <Input
-                                                            placeholder="Ex.: Supermercado Central"
-                                                            disabled={isSaving}
-                                                            {...field}
-                                                        />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
 
-                                        <FormField
-                                            control={form.control}
-                                            name="address"
-                                            render={({ field }) => (
-                                                <FormItem className="md:col-span-1">
-                                                    <FormLabel>Endereço</FormLabel>
-                                                    <FormControl>
-                                                        <Input
-                                                            placeholder="Rua, número, bairro, cidade"
-                                                            disabled={isSaving}
-                                                            {...field}
-                                                        />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
+                            <div className="grid gap-4 md:grid-cols-3">
+                                <FormField
+                                    control={form.control}
+                                    name="contactEmail"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>E-mail de contato</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    type="email"
+                                                    placeholder="contato@mercado.com"
+                                                    disabled={isSaving}
+                                                    value={field.value ?? ""}
+                                                    onChange={(event) => field.onChange(event.target.value)}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
 
-                                    <div className="grid gap-4 md:grid-cols-3">
-                                        <FormField
-                                            control={form.control}
-                                            name="contactEmail"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>E-mail de contato</FormLabel>
-                                                    <FormControl>
-                                                        <Input
-                                                            type="email"
-                                                            placeholder="contato@mercado.com"
-                                                            disabled={isSaving}
-                                                            value={field.value ?? ""}
-                                                            onChange={(event) => field.onChange(event.target.value)}
-                                                        />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
+                                <FormField
+                                    control={form.control}
+                                    name="contactPhone"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Telefone fixo</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    placeholder="(31) 1234-5678"
+                                                    disabled={isSaving}
+                                                    value={field.value ?? ""}
+                                                    onChange={(event) => field.onChange(event.target.value)}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
 
-                                        <FormField
-                                            control={form.control}
-                                            name="contactPhone"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Telefone fixo</FormLabel>
-                                                    <FormControl>
-                                                        <Input
-                                                            placeholder="(31) 1234-5678"
-                                                            disabled={isSaving}
-                                                            value={field.value ?? ""}
-                                                            onChange={(event) => field.onChange(event.target.value)}
-                                                        />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
+                                <FormField
+                                    control={form.control}
+                                    name="whatsappNumber"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>WhatsApp</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    placeholder="(31) 91234-5678"
+                                                    disabled={isSaving}
+                                                    value={field.value ?? ""}
+                                                    onChange={(event) => field.onChange(event.target.value)}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
 
-                                        <FormField
-                                            control={form.control}
-                                            name="whatsappNumber"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>WhatsApp</FormLabel>
-                                                    <FormControl>
-                                                        <Input
-                                                            placeholder="(31) 91234-5678"
-                                                            disabled={isSaving}
-                                                            value={field.value ?? ""}
-                                                            onChange={(event) => field.onChange(event.target.value)}
-                                                        />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
+                            <FormField
+                                control={form.control}
+                                name="isActive"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                                        <div className="space-y-0.5">
+                                            <FormLabel className="text-base">Mercado ativo</FormLabel>
+                                            <CardDescription>
+                                                Controle se o mercado está visível para os clientes.
+                                            </CardDescription>
+                                        </div>
+                                        <FormControl>
+                                            <Switch
+                                                checked={field.value}
+                                                onCheckedChange={field.onChange}
+                                                disabled={isSaving}
+                                            />
+                                        </FormControl>
+                                    </FormItem>
+                                )}
+                            />
 
-                                    <FormField
-                                        control={form.control}
-                                        name="isActive"
-                                        render={({ field }) => (
-                                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                                                <div className="space-y-0.5">
-                                                    <FormLabel className="text-base">Mercado ativo</FormLabel>
-                                                    <CardDescription>
-                                                        Controle se o mercado está visível para os clientes.
-                                                    </CardDescription>
-                                                </div>
-                                                <FormControl>
-                                                    <Switch
-                                                        checked={field.value}
-                                                        onCheckedChange={field.onChange}
-                                                        disabled={isSaving}
-                                                    />
-                                                </FormControl>
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    <div className="flex justify-end pt-2">
-                                        <Button type="submit" className="min-w-[160px]" disabled={isSaving}>
-                                            {isSaving ? "Salvando..." : "Salvar alterações"}
-                                        </Button>
-                                    </div>
-                                </form>
-                            </Form>
-                        </CardContent>
-                    </Card>
-                </div>
-            </ScrollArea>
+                            <div className="flex justify-end pt-2">
+                                <Button type="submit" className="min-w-[160px]" disabled={isSaving}>
+                                    {isSaving ? "Salvando..." : "Salvar alterações"}
+                                </Button>
+                            </div>
+                        </form>
+                    </Form>
+                </CardContent>
+            </Card>
 
             <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
                 <DialogContent className="gap-0 p-0 sm:max-w-140 *:[button]:hidden">
@@ -589,7 +575,6 @@ export function MarketSettingsClient({ tenantId, initialMarket }: MarketSettings
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </div>
+        </>
     )
 }
-

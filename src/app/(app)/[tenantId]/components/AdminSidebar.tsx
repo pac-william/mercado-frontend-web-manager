@@ -11,6 +11,7 @@ import {
     SidebarMenuItem
 } from "@/components/ui/sidebar";
 import {
+    CreditCard,
     FileText,
     Home,
     LayoutDashboard,
@@ -73,6 +74,11 @@ export default function AdminSidebar({ tenantId }: AdminSidebarProps) {
             title: "Relatórios",
             href: `/${tenantId}/reports`,
             icon: FileText,
+        },
+        {
+            title: "Métodos de pagamento",
+            href: `/${tenantId}/payment-methods`,
+            icon: CreditCard,
         },
         {
             title: "Configurações",
