@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import ManageMarketButton from "@/components/ManageMarketButton";
 import Link from "next/link";
 
 export default async function Home() {
@@ -43,11 +44,7 @@ export default async function Home() {
                                     <TableCell>{market.address}</TableCell>
                                     <TableCell>{market.profilePicture}</TableCell>
                                     <TableCell>
-                                        <Button variant="link" className="px-0 " asChild>
-                                            <Link href={`/${market.id}/dashboard`}>
-                                                Gerenciar
-                                            </Link>
-                                        </Button>
+                                        <ManageMarketButton marketId={market.id} />
                                     </TableCell>
                                 </TableRow>
                             ))}
