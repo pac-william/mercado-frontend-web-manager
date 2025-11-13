@@ -1,6 +1,6 @@
 "use client"
 
-import { createProduct } from "@/actions/products.actions";
+import { createProduct, updateProduct, getProductById } from "@/actions/products.actions";
 import { Category } from "@/app/domain/categoryDomain";
 import CropperZoomSlider from "@/components/cropper-zoom-slider";
 import SingleImageUploader from "@/components/single-image-uploader";
@@ -21,12 +21,15 @@ import { useNavigationWithLoading } from "@/hooks/useNavigationWithLoading";
 interface ProductCreateFormProps {
     tenantId: string;
     categories: Category[];
+    productId?: string;
 }
 
-export const ProductCreateForm = ({tenantId, categories}: ProductCreateFormProps) => {
+export const ProductCreateForm = ({tenantId, categories, productId}: ProductCreateFormProps) => {
     const { navigate } = useNavigationWithLoading();
     const [productImage, setProductImage] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const isEditing = Boolean(productId);
 
     const form = useForm<z.infer<typeof ProductDTO>>({
         resolver: zodResolver(ProductDTO),
@@ -35,6 +38,30 @@ export const ProductCreateForm = ({tenantId, categories}: ProductCreateFormProps
         },
         mode: "onChange",
     });
+
+    useEffect(() => {
+        if (productId) {
+            setIsLoading(true);
+            getProductById(productId)
+                .then((productData) => {
+                    setProductImage(productData.image || null);
+                    form.reset({
+                        name: productData.name,
+                        price: productData.price,
+                        marketId: tenantId,
+                        categoryId: productData.categoryId || "",
+                        sku: productData.sku || "",
+                    });
+                })
+                .catch((error) => {
+                    toast.error("Erro ao carregar produto");
+                    console.error(error);
+                })
+                .finally(() => {
+                    setIsLoading(false);
+                });
+        }
+    }, [productId, tenantId, form]);
 
     useEffect(() => {
         form.setValue("marketId", tenantId);
@@ -74,20 +101,35 @@ export const ProductCreateForm = ({tenantId, categories}: ProductCreateFormProps
         };
 
         try {
-            await createProduct(productData);
-            toast.success("Produto cadastrado com sucesso");
+            if (isEditing && productId) {
+                await updateProduct(productId, productData);
+                toast.success("Produto atualizado com sucesso");
+            } else {
+                await createProduct(productData);
+                toast.success("Produto cadastrado com sucesso");
+            }
             navigate(`/${tenantId}/products`, "Redirecionando...");
         } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : "Erro ao cadastrar produto";
+            const errorMessage = error instanceof Error ? error.message : isEditing ? "Erro ao atualizar produto" : "Erro ao cadastrar produto";
             toast.error(errorMessage);
             setIsSubmitting(false);
         }
     }
 
+    if (isLoading) {
+        return (
+            <Card className="max-w-3xl mx-auto">
+                <CardContent className="pt-6 flex items-center justify-center min-h-[200px]">
+                    <p className="text-muted-foreground">Carregando produto...</p>
+                </CardContent>
+            </Card>
+        );
+    }
+
     return (
         <Card className="max-w-3xl mx-auto">
             <CardHeader>
-                <CardTitle>Cadastro de Produto</CardTitle>
+                <CardTitle>{isEditing ? "Editar Produto" : "Cadastro de Produto"}</CardTitle>
             </CardHeader>
             <Separator />
             <CardContent className="pt-6">
@@ -192,7 +234,7 @@ export const ProductCreateForm = ({tenantId, categories}: ProductCreateFormProps
                                         className="min-w-[120px]"
                                         disabled={isSubmitting}
                                     >
-                                        {isSubmitting ? "Salvando..." : "Cadastrar"}
+                                        {isSubmitting ? "Salvando..." : isEditing ? "Salvar alterações" : "Cadastrar"}
                                     </Button>
                                 </div>
                             </div>
