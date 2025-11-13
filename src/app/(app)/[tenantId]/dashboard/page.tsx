@@ -1,19 +1,19 @@
-import { getMarketById } from "@/actions/market.actions";
 import { getOrders } from "@/actions/order.actions";
 import { getProductsByMarket } from "@/actions/products.actions";
 import { getUserByAuth0Id } from "@/actions/user.actions";
+import { ChartAreaDefault } from "@/app/components/charts/ChartAreaDefault";
+import { ChartBarMultiple } from "@/app/components/charts/ChartBarMultiple";
+import { ChartPieLabel } from "@/app/components/charts/ChartPieLabel";
 import { Order } from "@/app/domain/orderDomain";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { auth0 } from "@/lib/auth0";
-import { DollarSign, Package, Plus, Settings, ShoppingCart, Store, TrendingUp } from "lucide-react";
-import Link from "next/link";
+import { DollarSign, Package, ShoppingCart, TrendingUp } from "lucide-react";
 import { redirect } from "next/navigation";
 
 export default async function DashboardPage({ params }: { params: Promise<{ tenantId: string }> }) {
     const { tenantId } = await params;
     const session = await auth0.getSession();
-    
+
     if (!session) {
         redirect('/auth/login');
     }
@@ -22,8 +22,6 @@ export default async function DashboardPage({ params }: { params: Promise<{ tena
     const auth0Id = user?.sub || '';
 
     let marketId: string | null = tenantId ?? null;
-    let marketName = 'Seu Mercado';
-    let marketAddress = '';
     let totalProducts = 0;
     let totalOrders = 0;
     let pendingOrders = 0;
@@ -33,18 +31,11 @@ export default async function DashboardPage({ params }: { params: Promise<{ tena
         if (auth0Id) {
             const backendUser = await getUserByAuth0Id(auth0Id);
             const userMarketId = backendUser.marketId;
-            
+
             if (userMarketId) {
                 marketId = userMarketId;
-                try {
-                    const market = await getMarketById(userMarketId);
-                    marketName = market.name;
-                    marketAddress = market.address;
-                } catch (error) {
-                    console.error('Erro ao buscar mercado:', error);
-                }
             }
-            
+
             if (marketId) {
                 const products = await getProductsByMarket(marketId, { page: 1, size: 100 });
                 totalProducts = products.meta?.total || products.products.length;
@@ -52,14 +43,14 @@ export default async function DashboardPage({ params }: { params: Promise<{ tena
 
             // Buscar pedidos do mercado
             try {
-                const ordersData = await getOrders({ 
-                    page: 1, 
+                const ordersData = await getOrders({
+                    page: 1,
                     size: 100,
-                    marketId: marketId || undefined 
+                    marketId: marketId || undefined
                 });
                 const orders = ordersData.orders || [];
                 totalOrders = ordersData.meta?.total || orders.length;
-                pendingOrders = orders.filter((order: Order) => 
+                pendingOrders = orders.filter((order: Order) =>
                     ['PENDING', 'CONFIRMED', 'PREPARING'].includes(order.status)
                 ).length;
                 totalRevenue = orders
@@ -151,93 +142,17 @@ export default async function DashboardPage({ params }: { params: Promise<{ tena
                     </CardContent>
                 </Card>
             </div>
-
-            {/* Acesso Rápido */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                    <Link href={`/${tenantId}/products`}>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Package className="h-5 w-5" />
-                                Gerenciar Produtos
-                            </CardTitle>
-                            <CardDescription>
-                                Visualize, edite e gerencie seus produtos
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <Button variant="outline" className="w-full">
-                                Ver Produtos
-                            </Button>
-                        </CardContent>
-                    </Link>
-                </Card>
-
-                <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                    <Link href={`/${tenantId}/products/create`}>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Plus className="h-5 w-5" />
-                                Cadastrar Produto
-                            </CardTitle>
-                            <CardDescription>
-                                Adicione novos produtos ao seu catálogo
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <Button variant="outline" className="w-full">
-                                Criar Produto
-                            </Button>
-                        </CardContent>
-                    </Link>
-                </Card>
-
-                <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                    <Link href={`/${tenantId}/settings`}>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Settings className="h-5 w-5" />
-                                Configurações
-                            </CardTitle>
-                            <CardDescription>
-                                Configure as opções do seu mercado
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <Button variant="outline" className="w-full">
-                                Abrir Configurações
-                            </Button>
-                        </CardContent>
-                    </Link>
-                </Card>
+            <div className="grid gap-6 grid-cols-3">
+                <div className="col-span-1">
+                    <ChartBarMultiple />
+                </div>
+                <div className="col-span-1">
+                    <ChartPieLabel />
+                </div>
+                <div className="col-span-1">
+                    <ChartAreaDefault />
+                </div>
             </div>
-
-            {/* Informações do Mercado */}
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Store className="h-5 w-5" />
-                        Informações do Mercado
-                    </CardTitle>
-                    <CardDescription>
-                        Dados principais do seu estabelecimento
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="space-y-4">
-                        <div>
-                            <p className="text-sm font-medium text-muted-foreground">Nome</p>
-                            <p className="text-lg">{marketName}</p>
-                        </div>
-                        {marketAddress && (
-                            <div>
-                                <p className="text-sm font-medium text-muted-foreground">Endereço</p>
-                                <p className="text-lg">{marketAddress}</p>
-                            </div>
-                        )}
-                    </div>
-                </CardContent>
-            </Card>
         </div>
     );
 }
