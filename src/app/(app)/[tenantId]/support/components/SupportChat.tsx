@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { io, Socket } from "socket.io-client"
 
+import { createMessage, getChatByChatId, getStoreOwnerConversations } from "@/actions/chat.actions"
+import { getUserMe } from "@/actions/user.actions"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -35,7 +37,7 @@ type Conversation = {
 }
 
 type ServerConversa = {
-    roomId: string
+    chatId: string
     clienteId: string
     clienteUsername: string
     isActive: boolean
@@ -47,7 +49,7 @@ type ServerConversa = {
 
 type ServerMessage = {
     id: string
-    room: string
+    chat: string
     username: string
     message: string
     timestamp: string | Date
@@ -88,6 +90,7 @@ export function SupportChat({ tenantId }: SupportChatProps) {
     const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
     const [messageDraft, setMessageDraft] = useState("")
     const [isTyping, setIsTyping] = useState(false)
+    const [storeOwnerUserId, setStoreOwnerUserId] = useState<string | null>(null)
 
     const scrollRef = useRef<HTMLDivElement>(null)
     const socketRef = useRef<Socket | null>(null)
@@ -127,19 +130,85 @@ export function SupportChat({ tenantId }: SupportChatProps) {
         })
 
         // Após registro do lojista
-        socket.on("lojista:registered", (data) => {
+        socket.on("lojista:registered", async (data) => {
             console.log("Lojista registrado:", data)
-            // Listar conversas existentes
-            socket.emit("lojista:conversas")
+            // Buscar userId do lojista logado
+            let storeOwnerId: string | null = null;
+            try {
+                const storeOwner = await getUserMe()
+                storeOwnerId = storeOwner.id
+                setStoreOwnerUserId(storeOwnerId)
+            } catch (error) {
+                console.error("Erro ao buscar userId do lojista:", error)
+            }
+            
+            // Buscar conversas persistidas do backend
+            try {
+                const backendConversations = await getStoreOwnerConversations(tenantId)
+                
+                const newConversations: Conversation[] = backendConversations.map((conv) => ({
+                    id: conv.chatId,
+                    roomId: conv.chatId,
+                    clienteId: conv.customerId,
+                    customerName: conv.customerUsername,
+                    channel: "Site",
+                    status: conv.isActive ? "open" : "waiting",
+                    priority: "normal",
+                    lastInteraction: conv.lastMessage
+                        ? typeof conv.lastMessage.timestamp === 'string'
+                            ? new Date(conv.lastMessage.timestamp)
+                            : conv.lastMessage.timestamp
+                        : new Date(),
+                    messages: [],
+                    isActive: conv.isActive,
+                }))
+
+                setConversations(newConversations)
+                
+                // Se temos uma conversa ativa, carregar suas mensagens com o userId correto
+                if (newConversations.length > 0) {
+                    const firstConv = newConversations[0];
+                    try {
+                        const chatWithMessages = await getChatByChatId(firstConv.roomId);
+                        if (chatWithMessages && chatWithMessages.messages.length > 0) {
+                            // Extrair userId do cliente do chat (userId do chat = cliente)
+                            const customerUserId = chatWithMessages.userId;
+                            
+                            const conversationMessages: ChatMessage[] = chatWithMessages.messages.map((msg) => ({
+                                id: msg.id,
+                                author: msg.userId === customerUserId ? "client" : "agent",
+                                content: msg.message,
+                                timestamp: typeof msg.createdAt === 'string' ? new Date(msg.createdAt) : msg.createdAt,
+                            }));
+                            
+                            conversationMessages.sort(
+                                (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
+                            );
+                            
+                            setConversations(prev => prev.map(conv =>
+                                conv.roomId === firstConv.roomId
+                                    ? { ...conv, messages: conversationMessages }
+                                    : conv
+                            ));
+                        }
+                    } catch (error) {
+                        console.error("Erro ao carregar mensagens da primeira conversa:", error);
+                    }
+                }
+            } catch (error) {
+                console.error("Erro ao buscar conversas do backend:", error)
+                // Fallback: listar conversas via socket
+                socket.emit("lojista:conversas")
+            }
         })
 
-        // Receber lista de conversas
+        // Receber lista de conversas (fallback)
         socket.on("lojista:conversas", (conversas: ServerConversa[]) => {
-            console.log("Conversas recebidas:", conversas)
+            console.log("Conversas recebidas via socket:", conversas)
 
             const newConversations: Conversation[] = conversas.map((conv) => ({
-                id: conv.roomId,
-                roomId: conv.roomId,
+                id: conv.chatId,
+                roomId: conv.chatId,
                 clienteId: conv.clienteId,
                 customerName: conv.clienteUsername,
                 channel: "Site",
@@ -158,10 +227,10 @@ export function SupportChat({ tenantId }: SupportChatProps) {
             setActiveConversationId((currentId) => {
                 if (newConversations.length > 0 && !currentId) {
                     const firstConv = newConversations[0]
-                    // Entrar na sala da primeira conversa
+                    // Entrar no chat da primeira conversa
                     if (socket.connected && firstConv.roomId) {
-                        socket.emit("lojista:join-room", {
-                            roomId: firstConv.roomId,
+                        socket.emit("lojista:join-chat", {
+                            chatId: firstConv.roomId,
                         })
                         currentRoomIdRef.current = firstConv.roomId
                     }
@@ -173,153 +242,228 @@ export function SupportChat({ tenantId }: SupportChatProps) {
             })
         })
 
-        // Notificação quando cliente entra no chat
-        socket.on("chat:cliente-entered", (data) => {
-            console.log("Cliente entrou no chat:", data)
+        // Removido: Não notificar quando cliente entra no chat
+        // O lojista só será notificado quando receber uma mensagem
 
-            // Verificar se a conversa já existe
-            setConversations((prev) => {
-                const existing = prev.find((conv) => conv.roomId === data.roomId)
+        // Receber histórico de mensagens ao entrar em um chat
+        socket.on("chat:messages", async (messages: ServerMessage[]) => {
+            console.log("Histórico de mensagens recebido via socket:", messages)
 
-                if (existing) {
-                    return prev.map((conv) =>
-                        conv.roomId === data.roomId
-                            ? { ...conv, isActive: true, status: "open" }
-                            : conv
+            const chatId = messages[0]?.chat || currentRoomIdRef.current
+            if (!chatId) return
+
+            // Buscar mensagens persistidas do backend
+            try {
+                const chatWithMessages = await getChatByChatId(chatId)
+                
+                if (chatWithMessages && chatWithMessages.messages.length > 0) {
+                    // Extrair userId do cliente do chatId (formato: {userId}-{marketId})
+                    const customerUserId = chatWithMessages.userId;
+                    
+                    // Converter mensagens do backend para o formato esperado
+                    // Se msg.userId === customerUserId, é mensagem do cliente
+                    // Caso contrário, é mensagem do lojista (ou alguém do market)
+                    const conversationMessages: ChatMessage[] = chatWithMessages.messages.map((msg) => ({
+                        id: msg.id,
+                        author: msg.userId === customerUserId ? "client" : "agent",
+                        content: msg.message,
+                        timestamp: typeof msg.createdAt === 'string' ? new Date(msg.createdAt) : msg.createdAt,
+                    }))
+
+                    // Ordenar por timestamp
+                    conversationMessages.sort(
+                        (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
+                    )
+
+                    // Atualizar mensagens da conversa correspondente
+                    setConversations((prev) =>
+                        prev.map((conv) => {
+                            if (conv.roomId === chatId) {
+                                return {
+                                    ...conv,
+                                    messages: conversationMessages,
+                                    lastInteraction:
+                                        conversationMessages.length > 0
+                                            ? conversationMessages[conversationMessages.length - 1].timestamp
+                                            : conv.lastInteraction,
+                                }
+                            }
+                            return conv
+                        })
                     )
                 } else {
-                    // Criar nova conversa
-                    const newConversation: Conversation = {
-                        id: data.roomId,
-                        roomId: data.roomId,
-                        clienteId: data.clienteId,
-                        customerName: data.clienteUsername,
-                        channel: "Site",
-                        status: "open",
-                        priority: "normal",
-                        lastInteraction: new Date(),
-                        messages: [],
-                        isActive: true,
-                    }
-                    
-                    // Se não há conversa ativa, selecionar e entrar na nova
-                    const shouldAutoSelect = !activeConversationIdRef.current || prev.length === 0
-                    
-                    if (shouldAutoSelect && socket.connected) {
-                        // Entrar na sala da nova conversa
-                        socket.emit("lojista:join-room", {
-                            roomId: data.roomId,
-                        })
-                        currentRoomIdRef.current = data.roomId
-                        activeConversationIdRef.current = data.roomId
-                        setActiveConversationId(data.roomId)
-                    }
-                    
-                    return [newConversation, ...prev]
-                }
-            })
-        })
+                    // Chat não existe ainda ou não tem mensagens, usar mensagens do socket
+                    // Nota: mensagens do socket não têm userId, então usamos username como fallback
+                    if (messages && messages.length > 0) {
+                        setConversations((prev) =>
+                            prev.map((conv) => {
+                                if (conv.roomId === chatId) {
+                                    const conversationMessages: ChatMessage[] = messages.map((msg) => ({
+                                        id: msg.id,
+                                        author: msg.username === "Atendente" ? "agent" : "client",
+                                        content: msg.message,
+                                        timestamp: new Date(msg.timestamp),
+                                    }))
 
-        // Receber histórico de mensagens ao entrar em uma sala
-        socket.on("chat:messages", (messages: ServerMessage[]) => {
-            console.log("Histórico de mensagens recebido:", messages)
+                                    conversationMessages.sort(
+                                        (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
+                                    )
 
-            if (!messages || messages.length === 0) return
-
-            const roomId = messages[0]?.room
-            if (!roomId) return
-
-            // Atualizar mensagens da conversa correspondente
-            setConversations((prev) =>
-                prev.map((conv) => {
-                    if (conv.roomId === roomId) {
-                        const conversationMessages: ChatMessage[] = messages.map((msg) => ({
-                            id: msg.id,
-                            author: msg.username === "Atendente" ? "agent" : "client",
-                            content: msg.message,
-                            timestamp: new Date(msg.timestamp),
-                        }))
-
-                        // Ordenar por timestamp
-                        conversationMessages.sort(
-                            (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
+                                    return {
+                                        ...conv,
+                                        messages: conversationMessages,
+                                        lastInteraction:
+                                            conversationMessages.length > 0
+                                                ? conversationMessages[conversationMessages.length - 1].timestamp
+                                                : conv.lastInteraction,
+                                    }
+                                }
+                                return conv
+                            })
                         )
-
-                        return {
-                            ...conv,
-                            messages: conversationMessages,
-                            lastInteraction:
-                                conversationMessages.length > 0
-                                    ? conversationMessages[conversationMessages.length - 1].timestamp
-                                    : conv.lastInteraction,
-                        }
                     }
-                    return conv
-                })
-            )
+                }
+            } catch (error) {
+                console.error("Erro ao buscar mensagens do backend:", error)
+                // Fallback para mensagens do socket
+                if (messages && messages.length > 0) {
+                    setConversations((prev) =>
+                        prev.map((conv) => {
+                            if (conv.roomId === chatId) {
+                                const conversationMessages: ChatMessage[] = messages.map((msg) => ({
+                                    id: msg.id,
+                                    author: msg.username === "Atendente" ? "agent" : "client",
+                                    content: msg.message,
+                                    timestamp: new Date(msg.timestamp),
+                                }))
+
+                                conversationMessages.sort(
+                                    (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
+                                )
+
+                                return {
+                                    ...conv,
+                                    messages: conversationMessages,
+                                    lastInteraction:
+                                        conversationMessages.length > 0
+                                            ? conversationMessages[conversationMessages.length - 1].timestamp
+                                            : conv.lastInteraction,
+                                }
+                            }
+                            return conv
+                        })
+                    )
+                }
+            }
         })
 
         // Receber novas mensagens em tempo real
-        socket.on("chat:message-received", (message: ServerMessage) => {
+        socket.on("chat:message-received", async (message: ServerMessage) => {
             console.log("Nova mensagem recebida:", message)
 
-            // Encontrar conversa pelo roomId
-            setConversations((prev) => {
-                const existingConversation = prev.find((conv) => conv.roomId === message.room)
+            // Buscar informações do chat do backend para determinar corretamente o autor
+            try {
+                const chatWithMessages = await getChatByChatId(message.chat);
+                if (chatWithMessages) {
+                    const customerUserId = chatWithMessages.userId;
+                    
+                    // Buscar a mensagem recém-criada do backend para obter o userId correto
+                    // Como a mensagem foi recém-criada, ela deve estar no final da lista
+                    const latestMessage = chatWithMessages.messages[chatWithMessages.messages.length - 1];
+                    const isAgent = latestMessage && latestMessage.userId !== customerUserId;
+                    
+                    // Encontrar conversa pelo chatId
+                    setConversations((prev) => {
+                        const existingConversation = prev.find((conv) => conv.roomId === message.chat)
 
-                if (existingConversation) {
-                    // Verificar se a mensagem já existe (evitar duplicação)
-                    const messageExists = existingConversation.messages.some(
-                        (msg) => msg.id === message.id
-                    )
+                        if (existingConversation) {
+                            // Verificar se a mensagem já existe (evitar duplicação)
+                            const messageExists = existingConversation.messages.some(
+                                (msg) => msg.id === message.id
+                            )
 
-                    if (messageExists) {
-                        return prev
-                    }
+                            if (messageExists) {
+                                return prev
+                            }
 
-                    // Adicionar mensagem à conversa existente
-                    return prev.map((conv) =>
-                        conv.roomId === message.room
-                            ? {
-                                ...conv,
+                            // Adicionar mensagem à conversa existente com autor correto
+                            return prev.map((conv) =>
+                                conv.roomId === message.chat
+                                    ? {
+                                        ...conv,
+                                        messages: [
+                                            ...conv.messages,
+                                            {
+                                                id: message.id,
+                                                author: isAgent ? "agent" : "client",
+                                                content: message.message,
+                                                timestamp: new Date(message.timestamp),
+                                            },
+                                        ],
+                                        lastInteraction: new Date(message.timestamp),
+                                        status: conv.status === "resolved" ? "open" : conv.status,
+                                    }
+                                    : conv
+                            )
+                        } else {
+                            // Criar nova conversa (caso não tenha sido criada antes)
+                            const newConversation: Conversation = {
+                                id: message.chat,
+                                roomId: message.chat,
+                                clienteId: customerUserId,
+                                customerName: message.username,
+                                channel: "Site",
+                                status: "open",
+                                priority: "normal",
+                                lastInteraction: new Date(message.timestamp),
                                 messages: [
-                                    ...conv.messages,
                                     {
                                         id: message.id,
-                                        author: message.username === "Atendente" ? "agent" : "client",
+                                        author: isAgent ? "agent" : "client",
                                         content: message.message,
                                         timestamp: new Date(message.timestamp),
                                     },
                                 ],
-                                lastInteraction: new Date(message.timestamp),
-                                status: conv.status === "resolved" ? "open" : conv.status,
+                                isActive: true,
                             }
-                            : conv
-                    )
-                } else {
-                    // Criar nova conversa (caso não tenha sido criada antes)
-                    const newConversation: Conversation = {
-                        id: message.room,
-                        roomId: message.room,
-                        clienteId: "", // Será preenchido quando receber dados completos
-                        customerName: message.username,
-                        channel: "Site",
-                        status: "open",
-                        priority: "normal",
-                        lastInteraction: new Date(message.timestamp),
-                        messages: [
-                            {
-                                id: message.id,
-                                author: "client",
-                                content: message.message,
-                                timestamp: new Date(message.timestamp),
-                            },
-                        ],
-                        isActive: true,
-                    }
-                    return [newConversation, ...prev]
+                            return [newConversation, ...prev]
+                        }
+                    })
                 }
-            })
+            } catch (error) {
+                console.error("Erro ao buscar informações do chat:", error);
+                // Fallback: usar username para determinar autor
+                setConversations((prev) => {
+                    const existingConversation = prev.find((conv) => conv.roomId === message.chat)
+                    if (existingConversation) {
+                        const messageExists = existingConversation.messages.some(
+                            (msg) => msg.id === message.id
+                        )
+                        if (messageExists) {
+                            return prev
+                        }
+                        return prev.map((conv) =>
+                            conv.roomId === message.chat
+                                ? {
+                                    ...conv,
+                                    messages: [
+                                        ...conv.messages,
+                                        {
+                                            id: message.id,
+                                            author: message.username === "Atendente" ? "agent" : "client",
+                                            content: message.message,
+                                            timestamp: new Date(message.timestamp),
+                                        },
+                                    ],
+                                    lastInteraction: new Date(message.timestamp),
+                                    status: conv.status === "resolved" ? "open" : conv.status,
+                                }
+                                : conv
+                        )
+                    }
+                    return prev
+                })
+            }
         })
 
         // Tratamento de erros
@@ -351,9 +495,9 @@ export function SupportChat({ tenantId }: SupportChatProps) {
             socketRef.current.emit("chat:leave")
         }
 
-        // Entrar na sala da conversa selecionada
-        socketRef.current.emit("lojista:join-room", {
-            roomId: conversation.roomId,
+        // Entrar no chat da conversa selecionada
+        socketRef.current.emit("lojista:join-chat", {
+            chatId: conversation.roomId,
         })
 
         // Atualizar sala atual
@@ -362,22 +506,43 @@ export function SupportChat({ tenantId }: SupportChatProps) {
         setIsTyping(false)
     }
 
-    const handleSendMessage = () => {
+    const handleSendMessage = async () => {
         const trimmed = messageDraft.trim()
         if (!trimmed || !activeConversation) return
 
+        const roomId = activeConversation.roomId
+        if (!roomId) {
+            console.error("RoomId não encontrado na conversa ativa")
+            return
+        }
+
         setMessageDraft("")
 
-        // Enviar mensagem através do Socket.IO
-        if (socketRef.current?.connected && activeConversation) {
-            // Atualizar roomId atual se necessário
-            if (currentRoomIdRef.current !== activeConversation.roomId) {
-                currentRoomIdRef.current = activeConversation.roomId
-            }
+        // Atualizar roomId atual se necessário
+        if (currentRoomIdRef.current !== roomId) {
+            currentRoomIdRef.current = roomId
+        }
 
+        // Enviar mensagem através do Socket.IO (tempo real)
+        if (socketRef.current?.connected && activeConversation) {
+            console.log("[LOJISTA] Enviando mensagem via socket, roomId:", roomId);
+            console.log("[LOJISTA] Current roomId ref:", currentRoomIdRef.current);
             socketRef.current.emit("chat:send-message", {
                 message: trimmed,
             })
+        } else {
+            console.error("[LOJISTA] Socket não conectado ou conversa não ativa:", {
+                connected: socketRef.current?.connected,
+                activeConversation: !!activeConversation
+            });
+        }
+
+        // Persistir no backend usando o roomId da conversa
+        try {
+            await createMessage(roomId, trimmed)
+        } catch (error) {
+            console.error("Erro ao persistir mensagem no backend:", error)
+            // Não bloqueia o envio mesmo se falhar a persistência
         }
 
         // Não adicionar localmente - a mensagem será recebida do servidor via chat:message-received
