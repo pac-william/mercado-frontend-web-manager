@@ -14,7 +14,7 @@ export default async function SupportPage({ params }: SupportPageProps) {
 
     return (
         <div className="flex flex-col flex-1 gap-6">
-            <HeaderInfo title="Atendimento ao Cliente" description={`Monitore conversas e responda clientes em tempo real. Todas as interações do mercado <span className="font-semibold">${tenantId}</span> ficam centralizadas aqui.`} />
+            <HeaderInfo title="Atendimento ao Cliente" description={"Monitore conversas e responda clientes em tempo real. Todas as interações do mercado ficam centralizadas aqui."} />
             <SupportChat tenantId={tenantId} />
         </div >
     )

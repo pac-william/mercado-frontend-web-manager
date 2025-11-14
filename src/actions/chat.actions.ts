@@ -20,6 +20,7 @@ export interface ChatMessage {
     username: string;
     userId: string;
     message: string;
+    readAt: Date | string | null;
     createdAt: Date | string;
     updatedAt: Date | string;
 }
@@ -168,6 +169,40 @@ export const createMessage = async (
         return data;
     } catch (error) {
         console.error('Erro ao enviar mensagem:', error);
+        throw error;
+    }
+};
+
+export const markMessagesAsRead = async (chatId: string): Promise<{ success: boolean; count: number }> => {
+    try {
+        const session = await auth0.getSession();
+        if (!session) {
+            throw new Error('Usuário não autenticado');
+        }
+
+        const response = await fetch(`${baseUrl}/api/v1/chats/${chatId}/read`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${session.tokenSet.idToken}`,
+            },
+            cache: 'no-store',
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                throw new Error('Usuário não autenticado');
+            }
+            if (response.status === 404) {
+                throw new Error('Chat não encontrado');
+            }
+            throw new Error('Erro ao marcar mensagens como lidas');
+        }
+
+        const data = await response.json() as { success: boolean; count: number };
+        return data;
+    } catch (error) {
+        console.error('Erro ao marcar mensagens como lidas:', error);
         throw error;
     }
 };

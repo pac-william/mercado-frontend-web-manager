@@ -3,21 +3,26 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { io, Socket } from "socket.io-client"
 
-import { createMessage, getChatByChatId, getStoreOwnerConversations } from "@/actions/chat.actions"
+import { createMessage, getChatByChatId, getStoreOwnerConversations, markMessagesAsRead } from "@/actions/chat.actions"
 import { getUserMe } from "@/actions/user.actions"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
+import { AlertCircle, Check, CheckCheck } from "lucide-react"
 
 type MessageAuthor = "client" | "agent"
+type MessageStatus = "not_sent" | "sent" | "delivered" | "read"
 
 type ChatMessage = {
     id: string
     author: MessageAuthor
     content: string
     timestamp: Date
+    status?: MessageStatus
+    userId?: string
 }
 
 type ConversationStatus = "open" | "waiting" | "resolved"
@@ -91,6 +96,7 @@ export function SupportChat({ tenantId }: SupportChatProps) {
     const [messageDraft, setMessageDraft] = useState("")
     const [isTyping, setIsTyping] = useState(false)
     const [storeOwnerUserId, setStoreOwnerUserId] = useState<string | null>(null)
+    const storeOwnerUserIdRef = useRef<string | null>(null)
 
     const scrollRef = useRef<HTMLDivElement>(null)
     const socketRef = useRef<Socket | null>(null)
@@ -138,6 +144,7 @@ export function SupportChat({ tenantId }: SupportChatProps) {
                 const storeOwner = await getUserMe()
                 storeOwnerId = storeOwner.id
                 setStoreOwnerUserId(storeOwnerId)
+                storeOwnerUserIdRef.current = storeOwnerId
             } catch (error) {
                 console.error("Erro ao buscar userId do lojista:", error)
             }
@@ -174,12 +181,24 @@ export function SupportChat({ tenantId }: SupportChatProps) {
                             // Extrair userId do cliente do chat (userId do chat = cliente)
                             const customerUserId = chatWithMessages.userId;
                             
-                            const conversationMessages: ChatMessage[] = chatWithMessages.messages.map((msg) => ({
-                                id: msg.id,
-                                author: msg.userId === customerUserId ? "client" : "agent",
-                                content: msg.message,
-                                timestamp: typeof msg.createdAt === 'string' ? new Date(msg.createdAt) : msg.createdAt,
-                            }));
+                            const conversationMessages: ChatMessage[] = chatWithMessages.messages.map((msg) => {
+                                const isAgent = msg.userId !== customerUserId;
+                                let status: MessageStatus | undefined = undefined;
+                                
+                                if (isAgent && storeOwnerId) {
+                                    // Se é mensagem do lojista, verificar se foi lida
+                                    status = msg.readAt ? "read" as MessageStatus : "delivered" as MessageStatus;
+                                }
+                                
+                                return {
+                                    id: msg.id,
+                                    author: isAgent ? "agent" : "client",
+                                    content: msg.message,
+                                    timestamp: typeof msg.createdAt === 'string' ? new Date(msg.createdAt) : msg.createdAt,
+                                    status,
+                                    userId: msg.userId
+                                } as ChatMessage;
+                            });
                             
                             conversationMessages.sort(
                                 (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
@@ -263,12 +282,26 @@ export function SupportChat({ tenantId }: SupportChatProps) {
                     // Converter mensagens do backend para o formato esperado
                     // Se msg.userId === customerUserId, é mensagem do cliente
                     // Caso contrário, é mensagem do lojista (ou alguém do market)
-                    const conversationMessages: ChatMessage[] = chatWithMessages.messages.map((msg) => ({
-                        id: msg.id,
-                        author: msg.userId === customerUserId ? "client" : "agent",
-                        content: msg.message,
-                        timestamp: typeof msg.createdAt === 'string' ? new Date(msg.createdAt) : msg.createdAt,
-                    }))
+                    const conversationMessages: ChatMessage[] = chatWithMessages.messages.map((msg) => {
+                        const isAgent = msg.userId !== customerUserId;
+                        let status: MessageStatus | undefined = undefined;
+                        
+                        // Usar ref para acessar o valor atual do storeOwnerUserId dentro do listener
+                        const currentStoreOwnerId = storeOwnerUserIdRef.current;
+                        if (isAgent && currentStoreOwnerId) {
+                            // Se é mensagem do lojista, verificar se foi lida
+                            status = msg.readAt ? "read" as MessageStatus : "delivered" as MessageStatus;
+                        }
+                        
+                        return {
+                            id: msg.id,
+                            author: isAgent ? "agent" : "client",
+                            content: msg.message,
+                            timestamp: typeof msg.createdAt === 'string' ? new Date(msg.createdAt) : msg.createdAt,
+                            status,
+                            userId: msg.userId
+                        } as ChatMessage;
+                    })
 
                     // Ordenar por timestamp
                     conversationMessages.sort(
@@ -359,7 +392,7 @@ export function SupportChat({ tenantId }: SupportChatProps) {
 
         // Receber novas mensagens em tempo real
         socket.on("chat:message-received", async (message: ServerMessage) => {
-            console.log("Nova mensagem recebida:", message)
+            console.log("[LOJISTA] Nova mensagem recebida via socket:", message)
 
             // Buscar informações do chat do backend para determinar corretamente o autor
             try {
@@ -372,21 +405,82 @@ export function SupportChat({ tenantId }: SupportChatProps) {
                     const latestMessage = chatWithMessages.messages[chatWithMessages.messages.length - 1];
                     const isAgent = latestMessage && latestMessage.userId !== customerUserId;
                     
+                    // Usar ref para acessar o valor atual do storeOwnerUserId
+                    const currentStoreOwnerId = storeOwnerUserIdRef.current;
+                    
                     // Encontrar conversa pelo chatId
                     setConversations((prev) => {
                         const existingConversation = prev.find((conv) => conv.roomId === message.chat)
 
                         if (existingConversation) {
-                            // Verificar se a mensagem já existe (evitar duplicação)
-                            const messageExists = existingConversation.messages.some(
+                            // Verificar se a mensagem já existe pelo ID persistido
+                            const messageExistsById = existingConversation.messages.some(
                                 (msg) => msg.id === message.id
                             )
 
-                            if (messageExists) {
+                            if (messageExistsById) {
+                                console.log("[LOJISTA] Mensagem já existe pelo ID, ignorando");
                                 return prev
                             }
 
-                            // Adicionar mensagem à conversa existente com autor correto
+                            // Se é mensagem do próprio lojista, verificar se já existe uma mensagem temporária
+                            if (isAgent && currentStoreOwnerId && latestMessage?.userId === currentStoreOwnerId) {
+                                console.log("[LOJISTA] É mensagem própria, verificando duplicação...");
+                                
+                                // Procurar mensagem temporária com o mesmo conteúdo e userId
+                                const tempMessageIndex = existingConversation.messages.findIndex((msg) => {
+                                    const isTempMessage = msg.id?.startsWith('temp-');
+                                    const sameContent = msg.content === message.message;
+                                    const sameUserId = msg.userId === currentStoreOwnerId;
+                                    return isTempMessage && sameContent && sameUserId;
+                                });
+
+                                if (tempMessageIndex !== -1) {
+                                    console.log("[LOJISTA] Encontrada mensagem temporária, atualizando com dados persistidos");
+                                    // Atualizar mensagem temporária com dados persistidos
+                                    return prev.map((conv) =>
+                                        conv.roomId === message.chat
+                                            ? {
+                                                ...conv,
+                                                messages: conv.messages.map((msg, index) => 
+                                                    index === tempMessageIndex
+                                                        ? {
+                                                            ...msg,
+                                                            id: message.id,
+                                                            timestamp: new Date(message.timestamp),
+                                                            status: "delivered" as MessageStatus,
+                                                            userId: latestMessage?.userId || msg.userId
+                                                        }
+                                                        : msg
+                                                ),
+                                                lastInteraction: new Date(message.timestamp),
+                                                status: conv.status === "resolved" ? "open" : conv.status,
+                                            }
+                                            : conv
+                                    );
+                                }
+
+                                // Verificar por conteúdo e timestamp próximo (caso a mensagem persistida ainda não tenha sido adicionada)
+                                const messageTime = typeof message.timestamp === 'string'
+                                    ? new Date(message.timestamp).getTime()
+                                    : new Date(message.timestamp).getTime();
+
+                                const duplicateByContent = existingConversation.messages.some(msg => {
+                                    const msgTime = msg.timestamp.getTime();
+                                    const timeDiff = Math.abs(messageTime - msgTime);
+                                    const sameContent = msg.content === message.message;
+                                    const sameUserId = msg.userId === currentStoreOwnerId;
+                                    return sameContent && sameUserId && timeDiff < 10000; // 10 segundos
+                                });
+
+                                if (duplicateByContent) {
+                                    console.log("[LOJISTA] Mensagem duplicada por conteúdo/timestamp detectada, ignorando");
+                                    return prev;
+                                }
+                            }
+
+                            // Adicionar mensagem à conversa existente com autor correto (não é duplicada)
+                            console.log("[LOJISTA] Adicionando mensagem ao estado (não é duplicada)");
                             return prev.map((conv) =>
                                 conv.roomId === message.chat
                                     ? {
@@ -398,7 +492,10 @@ export function SupportChat({ tenantId }: SupportChatProps) {
                                                 author: isAgent ? "agent" : "client",
                                                 content: message.message,
                                                 timestamp: new Date(message.timestamp),
-                                            },
+                                                // Mensagens recebidas via socket têm status "delivered" por padrão
+                                                status: (isAgent ? "delivered" as MessageStatus : undefined),
+                                                userId: latestMessage?.userId
+                                            } as ChatMessage,
                                         ],
                                         lastInteraction: new Date(message.timestamp),
                                         status: conv.status === "resolved" ? "open" : conv.status,
@@ -422,7 +519,9 @@ export function SupportChat({ tenantId }: SupportChatProps) {
                                         author: isAgent ? "agent" : "client",
                                         content: message.message,
                                         timestamp: new Date(message.timestamp),
-                                    },
+                                        status: (isAgent ? "delivered" as MessageStatus : undefined),
+                                        userId: latestMessage?.userId
+                                    } as ChatMessage,
                                 ],
                                 isActive: true,
                             }
@@ -433,15 +532,38 @@ export function SupportChat({ tenantId }: SupportChatProps) {
             } catch (error) {
                 console.error("Erro ao buscar informações do chat:", error);
                 // Fallback: usar username para determinar autor
+                const currentStoreOwnerId = storeOwnerUserIdRef.current;
                 setConversations((prev) => {
                     const existingConversation = prev.find((conv) => conv.roomId === message.chat)
                     if (existingConversation) {
-                        const messageExists = existingConversation.messages.some(
+                        // Verificar se a mensagem já existe pelo ID
+                        const messageExistsById = existingConversation.messages.some(
                             (msg) => msg.id === message.id
                         )
-                        if (messageExists) {
+                        if (messageExistsById) {
                             return prev
                         }
+
+                        // Se é mensagem do lojista, verificar duplicação por conteúdo
+                        if (message.username === "Atendente" && currentStoreOwnerId) {
+                            const messageTime = typeof message.timestamp === 'string'
+                                ? new Date(message.timestamp).getTime()
+                                : new Date(message.timestamp).getTime();
+
+                            const duplicateByContent = existingConversation.messages.some(msg => {
+                                const msgTime = msg.timestamp.getTime();
+                                const timeDiff = Math.abs(messageTime - msgTime);
+                                const sameContent = msg.content === message.message;
+                                const sameUserId = msg.userId === currentStoreOwnerId;
+                                return sameContent && sameUserId && timeDiff < 10000;
+                            });
+
+                            if (duplicateByContent) {
+                                console.log("[LOJISTA] Mensagem duplicada por conteúdo detectada no fallback, ignorando");
+                                return prev;
+                            }
+                        }
+
                         return prev.map((conv) =>
                             conv.roomId === message.chat
                                 ? {
@@ -453,7 +575,8 @@ export function SupportChat({ tenantId }: SupportChatProps) {
                                             author: message.username === "Atendente" ? "agent" : "client",
                                             content: message.message,
                                             timestamp: new Date(message.timestamp),
-                                        },
+                                            status: (message.username === "Atendente" ? "delivered" as MessageStatus : undefined),
+                                        } as ChatMessage,
                                     ],
                                     lastInteraction: new Date(message.timestamp),
                                     status: conv.status === "resolved" ? "open" : conv.status,
@@ -464,6 +587,32 @@ export function SupportChat({ tenantId }: SupportChatProps) {
                     return prev
                 })
             }
+        })
+
+        // Receber notificação quando cliente marca mensagens como lidas
+        socket.on("chat:messages-read", (data: { chatId: string; readBy: string; readAt: Date }) => {
+            console.log("[LOJISTA] Mensagens marcadas como lidas pelo cliente:", data)
+            
+            // Atualizar status de todas as mensagens do lojista para "read"
+            setConversations((prev) =>
+                prev.map((conv) =>
+                    conv.roomId === data.chatId
+                        ? {
+                            ...conv,
+                            messages: conv.messages.map((msg) => {
+                                // Se é mensagem do agente (lojista), atualizar status para "read"
+                                if (msg.author === "agent" && msg.status && msg.status !== "read") {
+                                    return {
+                                        ...msg,
+                                        status: "read" as MessageStatus
+                                    }
+                                }
+                                return msg
+                            }),
+                        }
+                        : conv
+                )
+            )
         })
 
         // Tratamento de erros
@@ -481,9 +630,10 @@ export function SupportChat({ tenantId }: SupportChatProps) {
             currentRoomIdRef.current = null
             activeConversationIdRef.current = null
         }
+        // storeOwnerUserId é obtido dentro do listener do socket e acessado via ref (storeOwnerUserIdRef) para evitar dependências
     }, [tenantId])
 
-    const handleSelectConversation = (conversationId: string) => {
+    const handleSelectConversation = async (conversationId: string) => {
         const conversation = conversations.find((conv) => conv.id === conversationId)
         if (!conversation || !socketRef.current?.connected) return
 
@@ -503,12 +653,27 @@ export function SupportChat({ tenantId }: SupportChatProps) {
         // Atualizar sala atual
         currentRoomIdRef.current = conversation.roomId
 
+        // Marcar mensagens como lidas quando o lojista visualiza o chat
+        try {
+            await markMessagesAsRead(conversation.roomId)
+            console.log("[LOJISTA] Mensagens marcadas como lidas")
+            
+            // Notificar o cliente via socket que as mensagens foram lidas
+            if (socketRef.current?.connected) {
+                socketRef.current.emit("chat:messages-read", {
+                    chatId: conversation.roomId,
+                })
+            }
+        } catch (error) {
+            console.error("[LOJISTA] Erro ao marcar mensagens como lidas:", error)
+        }
+
         setIsTyping(false)
     }
 
     const handleSendMessage = async () => {
         const trimmed = messageDraft.trim()
-        if (!trimmed || !activeConversation) return
+        if (!trimmed || !activeConversation || !storeOwnerUserId) return
 
         const roomId = activeConversation.roomId
         if (!roomId) {
@@ -523,36 +688,166 @@ export function SupportChat({ tenantId }: SupportChatProps) {
             currentRoomIdRef.current = roomId
         }
 
-        // Enviar mensagem através do Socket.IO (tempo real)
+        // Criar ID temporário para a mensagem
+        const tempId = `temp-${Date.now()}-${Math.random()}`
+
+        // Adicionar mensagem ao estado IMEDIATAMENTE com status "not_sent"
+        const newMessage: ChatMessage = {
+            id: tempId,
+            author: "agent",
+            content: trimmed,
+            timestamp: new Date(),
+            status: "not_sent",
+            userId: storeOwnerUserId
+        }
+
+        setConversations((prev) =>
+            prev.map((conv) =>
+                conv.id === activeConversation.id
+                    ? {
+                        ...conv,
+                        messages: [...conv.messages, newMessage],
+                    }
+                    : conv
+            )
+        )
+
+        // Enviar via Socket.IO PRIMEIRO (garantir que sempre envia)
         if (socketRef.current?.connected && activeConversation) {
-            console.log("[LOJISTA] Enviando mensagem via socket, roomId:", roomId);
-            console.log("[LOJISTA] Current roomId ref:", currentRoomIdRef.current);
+            console.log("[LOJISTA] Enviando mensagem via socket, roomId:", roomId)
             socketRef.current.emit("chat:send-message", {
                 message: trimmed,
             })
+
+            // Atualizar status para "sent" após enviar
+            setConversations((prev) =>
+                prev.map((conv) =>
+                    conv.id === activeConversation.id
+                        ? {
+                            ...conv,
+                            messages: conv.messages.map((msg) =>
+                                msg.id === tempId ? { ...msg, status: "sent" as MessageStatus } : msg
+                            ),
+                        }
+                        : conv
+                )
+            )
         } else {
             console.error("[LOJISTA] Socket não conectado ou conversa não ativa:", {
                 connected: socketRef.current?.connected,
                 activeConversation: !!activeConversation
-            });
+            })
         }
 
-        // Persistir no backend usando o roomId da conversa
+        // Tentar persistir no backend DEPOIS de enviar via socket
         try {
-            await createMessage(roomId, trimmed)
+            const persistedMessage = await createMessage(roomId, trimmed)
+            console.log("[LOJISTA] Mensagem persistida:", persistedMessage.id)
+
+            // Atualizar mensagem temporária com dados persistidos e status "delivered"
+            setConversations((prev) =>
+                prev.map((conv) =>
+                    conv.id === activeConversation.id
+                        ? {
+                            ...conv,
+                            messages: conv.messages.map((msg) => {
+                                // Atualizar se for a mensagem temporária
+                                if (msg.id === tempId) {
+                                    console.log("[LOJISTA] Atualizando mensagem temporária com ID persistido:", persistedMessage.id);
+                                    return {
+                                        ...msg,
+                                        id: persistedMessage.id,
+                                        timestamp: typeof persistedMessage.createdAt === 'string'
+                                            ? new Date(persistedMessage.createdAt)
+                                            : persistedMessage.createdAt,
+                                        userId: persistedMessage.userId,
+                                        status: "delivered" as MessageStatus
+                                    }
+                                }
+                                // Se já foi atualizada com o ID persistido, não fazer nada
+                                if (msg.id === persistedMessage.id) {
+                                    return msg;
+                                }
+                                // Se for mensagem própria com mesmo conteúdo e status "sent", atualizar
+                                if (msg.userId === storeOwnerUserId &&
+                                    msg.content === trimmed &&
+                                    msg.status === "sent" &&
+                                    !msg.id.startsWith('temp-')) {
+                                    // Não atualizar, deixar o listener do socket atualizar
+                                    return msg;
+                                }
+                                return msg
+                            }),
+                        }
+                        : conv
+                )
+            )
         } catch (error) {
             console.error("Erro ao persistir mensagem no backend:", error)
-            // Não bloqueia o envio mesmo se falhar a persistência
+            // Se falhar a persistência, manter status "sent" (mensagem enviada mas não persistida)
         }
-
-        // Não adicionar localmente - a mensagem será recebida do servidor via chat:message-received
-        // Isso evita duplicação e garante que temos o ID correto do servidor
     }
 
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault()
         handleSendMessage()
     }
+
+    // Componente para exibir ícone de status da mensagem
+    const MessageStatusIcon = ({ status }: { status: MessageStatus }) => {
+        const getStatusConfig = () => {
+            switch (status) {
+                case "not_sent":
+                    return {
+                        icon: AlertCircle,
+                        label: "Não enviado",
+                        className: "text-red-400"
+                    };
+                case "sent":
+                    return {
+                        icon: Check,
+                        label: "Enviado",
+                        className: "text-muted-foreground"
+                    };
+                case "delivered":
+                    return {
+                        icon: CheckCheck,
+                        label: "Enviado/Recebido",
+                        className: "text-muted-foreground"
+                    };
+                case "read":
+                    return {
+                        icon: CheckCheck,
+                        label: "Lido",
+                        className: "text-blue-400"
+                    };
+                default:
+                    return {
+                        icon: Check,
+                        label: "Enviado",
+                        className: "text-muted-foreground"
+                    };
+            }
+        };
+
+        const config = getStatusConfig();
+        const Icon = config.icon;
+
+        return (
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <span className="inline-flex items-center">
+                            <Icon className={cn("h-3 w-3", config.className)} />
+                        </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>{config.label}</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+        );
+    };
 
     return (
         <div className="grid gap-6 lg:grid-cols-[320px_1fr] h-full">
@@ -654,24 +949,26 @@ export function SupportChat({ tenantId }: SupportChatProps) {
                                                     className={cn(
                                                         "max-w-[85%] rounded-lg px-3 py-2 text-sm shadow-sm",
                                                         isAgent
-                                                            ? "bg-primary text-primary-foreground"
+                                                            ? "bg-lime-200 text-gray-700"
                                                             : "bg-muted text-foreground"
                                                     )}
                                                 >
                                                     <p className="whitespace-pre-wrap text-sm">
                                                         {message.content}
                                                     </p>
-                                                    <span
-                                                        className={cn(
-                                                            "mt-1 block text-[11px]",
-                                                            isAgent
-                                                                ? "text-primary-foreground/70"
-                                                                : "text-muted-foreground"
+                                                    <div className="mt-1 flex items-center justify-between gap-2">
+                                                        <span
+                                                            className={cn(
+                                                                "text-[11px]"
+                                                            )}
+                                                        >
+                                                            {isAgent ? "Você" : activeConversation.customerName} •{" "}
+                                                            {formatTimestamp(message.timestamp)}
+                                                        </span>
+                                                        {isAgent && message.status && (
+                                                            <MessageStatusIcon status={message.status} />
                                                         )}
-                                                    >
-                                                        {isAgent ? "Você" : activeConversation.customerName} •{" "}
-                                                        {formatTimestamp(message.timestamp)}
-                                                    </span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         )
