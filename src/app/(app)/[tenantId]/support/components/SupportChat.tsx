@@ -79,7 +79,7 @@ const formatTimestamp = (date: Date) =>
         minute: "2-digit",
     })
 
-const MESSAGING_SERVER_URL = "http://localhost:4000"
+const MESSAGING_SERVER_URL = process.env.NEXT_PUBLIC_MESSAGING_SERVER_URL
 
 type SupportChatProps = {
     tenantId: string
