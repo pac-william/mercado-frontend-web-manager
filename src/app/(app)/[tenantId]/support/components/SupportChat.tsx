@@ -78,11 +78,23 @@ const channelBadgeStyles: Record<Conversation["channel"], string> = {
     Site: "bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300",
 }
 
-const formatTimestamp = (date: Date) =>
-    date.toLocaleTimeString("pt-BR", {
+const formatTimestamp = (timestamp: Date | string) => {
+    const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp
+    const now = new Date()
+    const diff = now.getTime() - date.getTime()
+    const minutes = Math.floor(diff / 60000)
+
+    if (minutes < 1) return "Agora"
+    if (minutes < 60) return `${minutes}min atrás`
+    if (minutes < 1440) return `${Math.floor(minutes / 60)}h atrás`
+
+    return date.toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
         hour: "2-digit",
         minute: "2-digit",
     })
+}
 
 const MESSAGING_SERVER_URL = process.env.NEXT_PUBLIC_MESSAGING_SERVER_URL
 
@@ -98,21 +110,45 @@ export function SupportChat({ tenantId }: SupportChatProps) {
     const [storeOwnerUserId, setStoreOwnerUserId] = useState<string | null>(null)
     const storeOwnerUserIdRef = useRef<string | null>(null)
 
-    const scrollRef = useRef<HTMLDivElement>(null)
+    const messagesEndRef = useRef<HTMLDivElement>(null)
     const socketRef = useRef<Socket | null>(null)
     const currentRoomIdRef = useRef<string | null>(null)
     const activeConversationIdRef = useRef<string | null>(null)
+    const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+    const isTypingRef = useRef<boolean>(false)
 
     const activeConversation = useMemo(
         () => conversations.find((conversation) => conversation.id === activeConversationId),
         [conversations, activeConversationId]
     )
 
+    // Auto-scroll to last message (same behavior as client chat)
+    const scrollToBottom = () => {
+        // Use requestAnimationFrame to ensure DOM is updated
+        requestAnimationFrame(() => {
+            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+        })
+    }
+
+    // Scroll when messages change or when typing indicator changes
     useEffect(() => {
-        if (scrollRef.current) {
-            scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+        if (activeConversation?.messages && activeConversation.messages.length > 0) {
+            scrollToBottom()
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeConversation?.messages.length, isTyping])
+
+    // Also scroll when conversation changes
+    useEffect(() => {
+        if (activeConversation?.messages && activeConversation.messages.length > 0) {
+            // Small delay to ensure DOM is ready when switching conversations
+            const timer = setTimeout(() => {
+                scrollToBottom()
+            }, 150)
+            return () => clearTimeout(timer)
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeConversationId])
 
     // Configuração do Socket.IO
     useEffect(() => {
@@ -615,6 +651,16 @@ export function SupportChat({ tenantId }: SupportChatProps) {
             )
         })
 
+        // Receber notificação quando cliente está digitando
+        socket.on("chat:typing", (data: { chatId: string; username: string; isTyping: boolean }) => {
+            console.log("[LOJISTA] Cliente está digitando:", data)
+            
+            // Atualizar estado de typing apenas se for do chat ativo
+            if (currentRoomIdRef.current === data.chatId) {
+                setIsTyping(data.isTyping)
+            }
+        })
+
         // Tratamento de erros
         socket.on("error", (error: { message: string }) => {
             console.error("Erro no Socket.IO:", error.message)
@@ -622,6 +668,14 @@ export function SupportChat({ tenantId }: SupportChatProps) {
 
         // Limpeza ao desmontar
         return () => {
+            // Parar de digitar ao desmontar
+            if (typingTimeoutRef.current) {
+                clearTimeout(typingTimeoutRef.current)
+            }
+            if (isTypingRef.current && socket.connected) {
+                socket.emit("chat:typing-stop")
+            }
+            
             if (currentRoomIdRef.current) {
                 socket.emit("chat:leave")
             }
@@ -633,9 +687,49 @@ export function SupportChat({ tenantId }: SupportChatProps) {
         // storeOwnerUserId é obtido dentro do listener do socket e acessado via ref (storeOwnerUserIdRef) para evitar dependências
     }, [tenantId])
 
+    // Função para gerenciar o indicador de digitação
+    const handleTyping = () => {
+        if (!socketRef.current?.connected || !currentRoomIdRef.current) return
+
+        // Se não estava digitando, enviar evento de início
+        if (!isTypingRef.current) {
+            isTypingRef.current = true
+            socketRef.current.emit("chat:typing-start")
+        }
+
+        // Limpar timeout anterior
+        if (typingTimeoutRef.current) {
+            clearTimeout(typingTimeoutRef.current)
+        }
+
+        // Definir timeout para parar de digitar após 3 segundos de inatividade
+        typingTimeoutRef.current = setTimeout(() => {
+            if (isTypingRef.current && socketRef.current?.connected) {
+                isTypingRef.current = false
+                socketRef.current.emit("chat:typing-stop")
+            }
+        }, 3000)
+    }
+
+    // Parar de digitar quando enviar mensagem
+    const stopTyping = () => {
+        if (typingTimeoutRef.current) {
+            clearTimeout(typingTimeoutRef.current)
+            typingTimeoutRef.current = null
+        }
+        if (isTypingRef.current && socketRef.current?.connected) {
+            isTypingRef.current = false
+            socketRef.current.emit("chat:typing-stop")
+        }
+    }
+
     const handleSelectConversation = async (conversationId: string) => {
         const conversation = conversations.find((conv) => conv.id === conversationId)
         if (!conversation || !socketRef.current?.connected) return
+
+        // Parar de digitar ao trocar de conversa
+        stopTyping()
+        setIsTyping(false)
 
         setActiveConversationId(conversationId)
         activeConversationIdRef.current = conversationId
@@ -680,6 +774,9 @@ export function SupportChat({ tenantId }: SupportChatProps) {
             console.error("RoomId não encontrado na conversa ativa")
             return
         }
+
+        // Parar de digitar ao enviar mensagem
+        stopTyping()
 
         setMessageDraft("")
 
@@ -935,44 +1032,59 @@ export function SupportChat({ tenantId }: SupportChatProps) {
                                 </div>
                             </div>
                         </CardHeader>
-                        <CardContent className="flex flex-1 flex-col gap-4 pt-6">
-                            <ScrollArea className="h-[420px] pr-4">
-                                <div ref={scrollRef} className="flex flex-col gap-4">
-                                    {activeConversation.messages.map((message) => {
-                                        const isAgent = message.author === "agent"
-                                        return (
-                                            <div
-                                                key={message.id}
-                                                className={`flex ${isAgent ? "justify-end" : "justify-start"}`}
-                                            >
+                        <CardContent className="flex flex-1 flex-col gap-4 pt-6 p-0">
+                            <ScrollArea className="flex flex-col flex-grow h-0 overflow-y-auto p-4">
+                                <div className="flex flex-col flex-1 gap-4">
+                                    {activeConversation.messages.length === 0 ? (
+                                        <div className="text-center text-muted-foreground py-8">
+                                            <p>Nenhuma mensagem ainda.</p>
+                                            <p className="text-sm mt-2">Seja o primeiro a enviar uma mensagem!</p>
+                                        </div>
+                                    ) : (
+                                        activeConversation.messages.map((message) => {
+                                            const isAgent = message.author === "agent"
+                                            return (
                                                 <div
+                                                    key={message.id}
                                                     className={cn(
-                                                        "max-w-[85%] rounded-lg px-3 py-2 text-sm shadow-sm",
-                                                        isAgent
-                                                            ? "bg-lime-200 text-gray-700"
-                                                            : "bg-muted text-foreground"
+                                                        "flex flex-col gap-1",
+                                                        isAgent ? "items-end" : "items-start"
                                                     )}
                                                 >
-                                                    <p className="whitespace-pre-wrap text-sm">
-                                                        {message.content}
-                                                    </p>
-                                                    <div className="mt-1 flex items-center justify-between gap-2">
-                                                        <span
-                                                            className={cn(
-                                                                "text-[11px]"
-                                                            )}
-                                                        >
-                                                            {isAgent ? "Você" : activeConversation.customerName} •{" "}
-                                                            {formatTimestamp(message.timestamp)}
-                                                        </span>
-                                                        {isAgent && message.status && (
-                                                            <MessageStatusIcon status={message.status} />
+                                                    <div
+                                                        className={cn(
+                                                            "rounded-lg px-4 py-2 max-w-[80%]",
+                                                            isAgent
+                                                                ? "bg-lime-200 text-gray-700"
+                                                                : "bg-muted text-foreground"
                                                         )}
+                                                    >
+                                                        {!isAgent && (
+                                                            <p className="text-xs font-semibold mb-1 opacity-80">
+                                                                {activeConversation.customerName}
+                                                            </p>
+                                                        )}
+                                                        <p className="text-sm whitespace-pre-wrap">
+                                                            {message.content}
+                                                        </p>
+                                                        <div className="flex items-center justify-between gap-2 mt-1">
+                                                            <span
+                                                                className={cn(
+                                                                    "text-xs",
+                                                                    isAgent ? "opacity-70" : "opacity-60"
+                                                                )}
+                                                            >
+                                                                {formatTimestamp(message.timestamp)}
+                                                            </span>
+                                                            {isAgent && message.status && (
+                                                                <MessageStatusIcon status={message.status} />
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        )
-                                    })}
+                                            )
+                                        })
+                                    )}
                                     {isTyping ? (
                                         <div className="flex justify-start">
                                             <div className="max-w-[70%] rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">
@@ -987,6 +1099,7 @@ export function SupportChat({ tenantId }: SupportChatProps) {
                                             </div>
                                         </div>
                                     ) : null}
+                                    <div ref={messagesEndRef} />
                                 </div>
                             </ScrollArea>
                         </CardContent>
@@ -994,13 +1107,18 @@ export function SupportChat({ tenantId }: SupportChatProps) {
                             <form onSubmit={handleSubmit} className="flex w-full flex-col gap-3">
                                 <textarea
                                     value={messageDraft}
-                                    onChange={(event) => setMessageDraft(event.target.value)}
+                                    onChange={(event) => {
+                                        setMessageDraft(event.target.value)
+                                        handleTyping()
+                                    }}
                                     onKeyDown={(e) => {
                                         if (e.key === "Enter" && !e.shiftKey) {
                                             e.preventDefault();
                                             if (messageDraft.trim()) {
                                                 handleSendMessage();
                                             }
+                                        } else {
+                                            handleTyping()
                                         }
                                     }}
                                     rows={3}
