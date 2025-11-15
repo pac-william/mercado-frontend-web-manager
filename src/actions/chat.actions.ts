@@ -208,3 +208,34 @@ export const markMessagesAsRead = async (chatId: string): Promise<{ success: boo
     }
 };
 
+export const getUnreadMessagesCountByMarketId = async (marketId: string): Promise<number> => {
+    try {
+        const session = await auth0.getSession();
+        if (!session) {
+            throw new Error('Usuário não autenticado');
+        }
+
+        const response = await fetch(`${baseUrl}/api/v1/chats/market/${marketId}/unread-count`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${session.tokenSet.idToken}`,
+            },
+            cache: 'no-store',
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                throw new Error('Usuário não autenticado');
+            }
+            throw new Error('Erro ao buscar contagem de mensagens não lidas');
+        }
+
+        const data = await response.json() as { count: number };
+        return data.count;
+    } catch (error) {
+        console.error('Erro ao buscar contagem de mensagens não lidas:', error);
+        throw error;
+    }
+};
+

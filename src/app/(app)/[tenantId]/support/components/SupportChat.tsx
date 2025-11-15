@@ -176,30 +176,20 @@ export function SupportChat({ tenantId }: SupportChatProps) {
                 return
             }
 
-            // Verificar se o outro usuário está no chat antes de marcar como lido
-            if (socketRef.current?.connected) {
-                socketRef.current.emit("chat:check-presence", { chatId: activeConversation.roomId }, (response: { hasOtherUser: boolean }) => {
-                    if (!response.hasOtherUser) {
-                        console.log("[LOJISTA] Outro usuário não está no chat, não marcando como lido")
-                        return
-                    }
+            // Marcar mensagens como lidas (manager sempre marca, independente de presença)
+            markMessagesAsRead(activeConversation.roomId).then((result) => {
+                lastMarkReadRef.current = Date.now()
+                console.log("[LOJISTA] Mensagens marcadas como lidas:", result)
 
-                    // Marcar como lido apenas se o outro usuário estiver presente
-                    markMessagesAsRead(activeConversation.roomId).then(() => {
-                        lastMarkReadRef.current = Date.now()
-                        console.log("[LOJISTA] Mensagens marcadas como lidas após interação (outro usuário presente)")
-
-                        // Notificar o cliente via socket
-                        if (socketRef.current?.connected) {
-                            socketRef.current.emit("chat:messages-read", {
-                                chatId: activeConversation.roomId,
-                            })
-                        }
-                    }).catch((error) => {
-                        console.error("[LOJISTA] Erro ao marcar mensagens como lidas:", error)
+                // Notificar o cliente via socket se estiver conectado
+                if (socketRef.current?.connected) {
+                    socketRef.current.emit("chat:messages-read", {
+                        chatId: activeConversation.roomId,
                     })
-                })
-            }
+                }
+            }).catch((error) => {
+                console.error("[LOJISTA] Erro ao marcar mensagens como lidas:", error)
+            })
         }, 1000)
     }, [activeConversation?.roomId])
 

@@ -1,5 +1,6 @@
 "use client"
 
+import { getUnreadMessagesCountByMarketId } from "@/actions/chat.actions";
 import {
     Sidebar,
     SidebarContent,
@@ -24,6 +25,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 
 
@@ -32,7 +34,24 @@ interface AdminSidebarProps {
 }
 
 export default function AdminSidebar({ tenantId }: AdminSidebarProps) {
+    const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
 
+    useEffect(() => {
+        const fetchUnreadMessagesCount = async () => {
+            try {
+                const count = await getUnreadMessagesCountByMarketId(tenantId);
+                setUnreadMessagesCount(count);
+            } catch (error) {
+                console.error("Erro ao buscar contagem de mensagens não lidas:", error);
+                setUnreadMessagesCount(0);
+            }
+        }
+        fetchUnreadMessagesCount();
+
+        // Atualizar a cada 10 segundos
+        const interval = setInterval(fetchUnreadMessagesCount, 10000);
+        return () => clearInterval(interval);
+    }, [tenantId]);
 
     const menuItems = [
         {
@@ -112,10 +131,15 @@ export default function AdminSidebar({ tenantId }: AdminSidebarProps) {
                                         >
                                             <Link
                                                 href={item.href}
-                                                className="flex items-center gap-3"
+                                                className="flex items-center gap-3 relative"
                                             >
                                                 <Icon className="h-4 w-4" />
                                                 <span>{item.title}</span>
+                                                {item.title === "Atendimento" && unreadMessagesCount > 0 && (
+                                                    <span className="ml-auto bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center min-w-[20px]">
+                                                        {unreadMessagesCount > 99 ? "99+" : unreadMessagesCount}
+                                                    </span>
+                                                )}
                                             </Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
