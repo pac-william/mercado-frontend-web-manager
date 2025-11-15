@@ -20,6 +20,7 @@ export interface ChatMessage {
     username: string;
     userId: string;
     message: string;
+    status: "NOT_SENT" | "SENT" | "DELIVERED" | "READ";
     readAt: Date | string | null;
     createdAt: Date | string;
     updatedAt: Date | string;
