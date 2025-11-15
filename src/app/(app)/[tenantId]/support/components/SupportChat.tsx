@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { io, Socket } from "socket.io-client"
 
 import { createMessage, getChatByChatId, getStoreOwnerConversations, markMessagesAsRead } from "@/actions/chat.actions"
@@ -116,6 +116,9 @@ export function SupportChat({ tenantId }: SupportChatProps) {
     const activeConversationIdRef = useRef<string | null>(null)
     const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
     const isTypingRef = useRef<boolean>(false)
+    const markReadTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+    const lastMarkReadRef = useRef<number>(0)
+    const isWindowFocusedRef = useRef<boolean>(true)
 
     const activeConversation = useMemo(
         () => conversations.find((conversation) => conversation.id === activeConversationId),
@@ -149,6 +152,56 @@ export function SupportChat({ tenantId }: SupportChatProps) {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeConversationId])
+
+    // Função para marcar mensagens como lidas com debounce
+    const markMessagesAsReadDebounced = useCallback(() => {
+        if (!activeConversation?.roomId || !socketRef.current?.connected) return
+
+        const now = Date.now()
+
+        // Evitar marcar como lido muito frequentemente (mínimo 2 segundos entre chamadas)
+        if (now - lastMarkReadRef.current < 2000) {
+            return
+        }
+
+        // Limpar timeout anterior
+        if (markReadTimeoutRef.current) {
+            clearTimeout(markReadTimeoutRef.current)
+        }
+
+        // Debounce: aguardar 1 segundo após a última interação
+        markReadTimeoutRef.current = setTimeout(async () => {
+            // Só marcar como lido se a janela estiver em foco
+            if (!isWindowFocusedRef.current) {
+                return
+            }
+
+            // Verificar se o outro usuário está no chat antes de marcar como lido
+            if (socketRef.current?.connected) {
+                socketRef.current.emit("chat:check-presence", { chatId: activeConversation.roomId }, (response: { hasOtherUser: boolean }) => {
+                    if (!response.hasOtherUser) {
+                        console.log("[LOJISTA] Outro usuário não está no chat, não marcando como lido")
+                        return
+                    }
+
+                    // Marcar como lido apenas se o outro usuário estiver presente
+                    markMessagesAsRead(activeConversation.roomId).then(() => {
+                        lastMarkReadRef.current = Date.now()
+                        console.log("[LOJISTA] Mensagens marcadas como lidas após interação (outro usuário presente)")
+
+                        // Notificar o cliente via socket
+                        if (socketRef.current?.connected) {
+                            socketRef.current.emit("chat:messages-read", {
+                                chatId: activeConversation.roomId,
+                            })
+                        }
+                    }).catch((error) => {
+                        console.error("[LOJISTA] Erro ao marcar mensagens como lidas:", error)
+                    })
+                })
+            }
+        }, 1000)
+    }, [activeConversation?.roomId])
 
     // Configuração do Socket.IO
     useEffect(() => {
@@ -687,6 +740,68 @@ export function SupportChat({ tenantId }: SupportChatProps) {
         // storeOwnerUserId é obtido dentro do listener do socket e acessado via ref (storeOwnerUserIdRef) para evitar dependências
     }, [tenantId])
 
+    // Detectar interações do usuário para marcar mensagens como lidas
+    useEffect(() => {
+        if (!activeConversation?.roomId) return
+
+        // Detectar foco da janela
+        const handleFocus = () => {
+            isWindowFocusedRef.current = true
+            markMessagesAsReadDebounced()
+        }
+
+        const handleBlur = () => {
+            isWindowFocusedRef.current = false
+        }
+
+        // Detectar scroll na área de mensagens
+        const handleScroll = () => {
+            if (isWindowFocusedRef.current) {
+                markMessagesAsReadDebounced()
+            }
+        }
+
+        // Detectar interações (clique, digitação, etc.)
+        const handleInteraction = () => {
+            if (isWindowFocusedRef.current) {
+                markMessagesAsReadDebounced()
+            }
+        }
+
+        // Adicionar listeners
+        window.addEventListener("focus", handleFocus)
+        window.addEventListener("blur", handleBlur)
+        window.addEventListener("click", handleInteraction)
+        window.addEventListener("keydown", handleInteraction)
+
+        // Adicionar listener de scroll no ScrollArea
+        const scrollArea = document.querySelector('[data-slot="scroll-area-viewport"]')
+        if (scrollArea) {
+            scrollArea.addEventListener("scroll", handleScroll)
+        }
+
+        return () => {
+            window.removeEventListener("focus", handleFocus)
+            window.removeEventListener("blur", handleBlur)
+            window.removeEventListener("click", handleInteraction)
+            window.removeEventListener("keydown", handleInteraction)
+            if (scrollArea) {
+                scrollArea.removeEventListener("scroll", handleScroll)
+            }
+            if (markReadTimeoutRef.current) {
+                clearTimeout(markReadTimeoutRef.current)
+            }
+        }
+    }, [activeConversation?.roomId, markMessagesAsReadDebounced])
+
+    // Marcar como lido quando novas mensagens chegam e o usuário está visualizando
+    useEffect(() => {
+        if (activeConversation?.messages && activeConversation.messages.length > 0 && isWindowFocusedRef.current) {
+            markMessagesAsReadDebounced()
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeConversation?.messages.length, markMessagesAsReadDebounced])
+
     // Função para gerenciar o indicador de digitação
     const handleTyping = () => {
         if (!socketRef.current?.connected || !currentRoomIdRef.current) return
@@ -747,20 +862,9 @@ export function SupportChat({ tenantId }: SupportChatProps) {
         // Atualizar sala atual
         currentRoomIdRef.current = conversation.roomId
 
-        // Marcar mensagens como lidas quando o lojista visualiza o chat
-        try {
-            await markMessagesAsRead(conversation.roomId)
-            console.log("[LOJISTA] Mensagens marcadas como lidas")
-            
-            // Notificar o cliente via socket que as mensagens foram lidas
-            if (socketRef.current?.connected) {
-                socketRef.current.emit("chat:messages-read", {
-                    chatId: conversation.roomId,
-                })
-            }
-        } catch (error) {
-            console.error("[LOJISTA] Erro ao marcar mensagens como lidas:", error)
-        }
+        // Marcar mensagens como lidas quando o lojista visualiza o chat (chamada inicial)
+        // As interações subsequentes serão detectadas automaticamente
+        markMessagesAsReadDebounced()
 
         setIsTyping(false)
     }
