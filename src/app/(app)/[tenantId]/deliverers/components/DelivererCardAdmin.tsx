@@ -3,11 +3,11 @@
 import { deleteDeliverer, partialUpdateDeliverer } from "@/actions/deliverer.actions";
 import { Deliverer } from "@/app/domain/delivererDomain";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Pencil, Trash2, Truck } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -64,7 +64,7 @@ export default function DelivererCardAdmin({ deliverer, tenantId }: DelivererCar
     };
 
     return (
-        <Card className="flex flex-col w-full max-w-xs">
+        <Card className="flex flex-col w-full">
             <CardHeader>
                 <div className="flex items-center justify-between">
                     <CardTitle className="text-lg line-clamp-1">{deliverer.name}</CardTitle>

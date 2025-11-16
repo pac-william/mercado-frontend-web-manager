@@ -22,8 +22,8 @@ export default async function DeliverersPage({ params, searchParams }: Deliverer
     });
 
     return (
-        <ScrollArea className="flex flex-col flex-grow h-0">
-            <div className="flex flex-1 flex-col gap-4 pr-4">
+        <ScrollArea className="flex flex-col flex-grow h-0 overflow-y-auto pr-4">
+            <div className="flex flex-1 flex-col gap-6">
                 <div className="flex flex-row gap-4 items-center justify-between">
                     <HeaderInfo title="Entregadores" description="Gerencie os entregadores cadastrados" />
                     <Button asChild>

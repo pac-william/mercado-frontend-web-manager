@@ -35,7 +35,7 @@ export default async function Products({ searchParams, params }: { searchParams:
 
     return (
         <ScrollArea className="flex flex-col flex-grow h-0 overflow-y-auto pr-4">
-            <div className="flex flex-1 flex-col gap-4 pr-4">
+            <div className="flex flex-1 flex-col gap-4">
                 <div className="flex flex-row items-center justify-between">
                     <HeaderInfo title="Produtos" description="Gerencie os produtos cadastrados" />
                     <Button asChild>

@@ -93,7 +93,7 @@ export const DeliverySettingsForm = ({ tenantId }: DeliverySettingsFormProps) =>
 
     if (isLoading) {
         return (
-            <Card className="max-w-2xl mx-auto">
+            <Card className="flex flex-col flex-1 w-full">
                 <CardContent className="pt-6 flex items-center justify-center min-h-[200px]">
                     <p className="text-muted-foreground">Carregando configurações...</p>
                 </CardContent>
@@ -102,7 +102,7 @@ export const DeliverySettingsForm = ({ tenantId }: DeliverySettingsFormProps) =>
     }
 
     return (
-        <Card className="max-w-2xl mx-auto">
+        <Card className="flex flex-col flex-1 w-full">
             <CardHeader>
                 <CardTitle>Configurações de Entrega</CardTitle>
             </CardHeader>

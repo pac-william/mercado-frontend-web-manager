@@ -10,14 +10,12 @@ export default async function DeliveriesPage({ params }: DeliveriesPageProps) {
     const { tenantId } = await params;
 
     return (
-        <div className="flex flex-col flex-1">
-            <ScrollArea className="flex flex-col flex-grow h-0">
+        <ScrollArea className="flex flex-col flex-grow h-0 overflow-y-auto pr-4">
+            <div className="flex flex-1 flex-col gap-6">
                 <HeaderInfo title="Entregas" description="Gerencie as entregas cadastradas" />
-                <div className="flex justify-center">
-                    <DeliverySettingsForm tenantId={tenantId} />
-                </div>
-            </ScrollArea>
-        </div>
+                <DeliverySettingsForm tenantId={tenantId} />
+            </div>
+        </ScrollArea>
     );
 }
 

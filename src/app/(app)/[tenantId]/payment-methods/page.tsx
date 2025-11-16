@@ -7,8 +7,8 @@ export default async function PaymentMethodsPage({ params }: { params: Promise<{
 
     return (
         <div className="flex flex-1 flex-col">
-            <ScrollArea className="flex flex-grow flex-col h-0 overflow-y-auto">
-                <div className="flex flex-col gap-6">
+            <ScrollArea className="flex flex-col flex-grow h-0 overflow-y-auto pr-4">
+                <div className="flex flex-1 flex-col gap-6">
                     <HeaderInfo title="Métodos de pagamento" description="Ative e configure os meios aceitos pelo mercado. Essas definições refletem nos canais App e Web e ajudam o financeiro a conciliar os repasses corretamente." />
                     <PaymentMethodsSettings tenantId={tenantId} />
                 </div>

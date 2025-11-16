@@ -4,6 +4,7 @@ import { ChartPaymentMethod } from "@/app/components/charts/ChartPaymentMethod";
 import { ChartPieLabel } from "@/app/components/charts/ChartPieLabel";
 import { HeaderInfo } from "@/app/components/HeaderInfo";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { auth0 } from "@/lib/auth0";
 import { DollarSign, Package, ShoppingCart, TrendingUp } from "lucide-react";
 import Link from "next/link";
@@ -55,7 +56,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ tena
         const date = new Date(today);
         date.setDate(date.getDate() - i);
         const dateStr = date.toISOString().split('T')[0];
-        
+
         // Faturamento diário variando entre 1000 e 3000
         const baseFaturamento = 1000 + Math.random() * 2000;
         // Ticket médio variando entre 120 e 160
@@ -69,7 +70,8 @@ export default async function DashboardPage({ params }: { params: Promise<{ tena
     }
 
     return (
-        <div className="space-y-6">
+        <ScrollArea className="flex flex-col flex-grow h-0 overflow-y-auto pr-4">
+            <div className="flex flex-1 flex-col gap-4">
             <HeaderInfo title="Tela Inicial" description="Bem-vindo ao painel administrativo" />
 
             {/* Cards de Estatísticas */}
@@ -167,5 +169,6 @@ export default async function DashboardPage({ params }: { params: Promise<{ tena
                 </div>
             </div>
         </div>
+        </ScrollArea >
     );
 }
