@@ -18,6 +18,7 @@ import {
     LayoutDashboard,
     MessagesSquare,
     Package,
+    Receipt,
     Settings,
     ShoppingCart,
     Truck,
@@ -68,6 +69,11 @@ export default function AdminSidebar({ tenantId }: AdminSidebarProps) {
             title: "Produtos",
             href: `/${tenantId}/products`,
             icon: Package,
+        },
+        {
+            title: "Pedidos",
+            href: `/${tenantId}/orders`,
+            icon: Receipt,
         },
         {
             title: "Entrega",
