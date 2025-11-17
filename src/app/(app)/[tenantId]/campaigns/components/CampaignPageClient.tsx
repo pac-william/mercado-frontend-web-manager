@@ -4,11 +4,11 @@ import { Campaign } from "@/app/domain/campaignDomain";
 import { HeaderInfo } from "@/app/components/HeaderInfo";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CampaignList } from "./CampaignList";
 import { SlotVisualization } from "./SlotVisualization";
 import { CampaignForm } from "./CampaignForm";
-import { getCampaignsByMarket } from "@/actions/campaign.actions";
+import { getCampaignsByMarket, getAllActiveCampaignsForSlots } from "@/actions/campaign.actions";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -23,14 +23,21 @@ export default function CampaignPageClient({
 }: CampaignPageClientProps) {
     const router = useRouter();
     const [campaigns, setCampaigns] = useState<Campaign[]>(initialCampaigns);
+    const [allActiveCampaigns, setAllActiveCampaigns] = useState<Campaign[]>([]);
     const [formOpen, setFormOpen] = useState(false);
     const [editingCampaign, setEditingCampaign] = useState<Campaign | undefined>();
     const [selectedSlot, setSelectedSlot] = useState<number | undefined>();
 
     const handleRefresh = async () => {
         try {
+            // Buscar campanhas do mercado atual
             const updatedCampaigns = await getCampaignsByMarket(tenantId);
             setCampaigns(updatedCampaigns);
+            
+            // Buscar TODAS as campanhas ativas/agendadas para visualização de slots (slots são globais)
+            const allActive = await getAllActiveCampaignsForSlots();
+            setAllActiveCampaigns(allActive);
+            
             router.refresh();
         } catch (error) {
             toast.error(
@@ -40,6 +47,19 @@ export default function CampaignPageClient({
             );
         }
     };
+
+    // Carregar todas as campanhas ativas na inicialização
+    useEffect(() => {
+        const loadAllActiveCampaigns = async () => {
+            try {
+                const allActive = await getAllActiveCampaignsForSlots();
+                setAllActiveCampaigns(allActive);
+            } catch (error) {
+                console.error("Erro ao buscar campanhas ativas:", error);
+            }
+        };
+        loadAllActiveCampaigns();
+    }, []);
 
     const handleCreate = () => {
         setEditingCampaign(undefined);
@@ -54,14 +74,28 @@ export default function CampaignPageClient({
     };
 
     const handleSlotClick = (slot: number) => {
-        const existingCampaign = campaigns.find(
+        // Verificar se há campanha neste slot do mercado atual (para edição)
+        const ownCampaign = campaigns.find(
             (c) => c.slot === slot && (c.status === "ACTIVE" || c.status === "SCHEDULED" || c.status === "DRAFT")
         );
         
-        if (existingCampaign) {
-            setEditingCampaign(existingCampaign);
+        // Se existe campanha deste mercado no slot, permitir editar
+        if (ownCampaign) {
+            setEditingCampaign(ownCampaign);
             setSelectedSlot(slot);
         } else {
+            // Verificar se há campanha de OUTRO mercado neste slot
+            const otherMarketCampaign = allActiveCampaigns.find(
+                (c) => c.slot === slot && 
+                       (c.status === "ACTIVE" || c.status === "SCHEDULED" || c.status === "DRAFT") &&
+                       c.marketId !== tenantId
+            );
+            
+            if (otherMarketCampaign) {
+                // Slot ocupado por outro mercado - avisar mas permitir agendar para outro período
+                toast.warning(`Slot ${slot} está ocupado por outro mercado. Escolha um período diferente.`);
+            }
+            
             setEditingCampaign(undefined);
             setSelectedSlot(slot);
         }
@@ -88,7 +122,7 @@ export default function CampaignPageClient({
             <div className="grid gap-6 lg:grid-cols-2">
                 <div className="space-y-6">
                     <SlotVisualization
-                        campaigns={campaigns}
+                        campaigns={allActiveCampaigns}
                         selectedSlot={selectedSlot}
                         onSlotClick={handleSlotClick}
                     />
@@ -108,7 +142,7 @@ export default function CampaignPageClient({
                 onOpenChange={setFormOpen}
                 marketId={tenantId}
                 campaign={editingCampaign}
-                campaigns={campaigns}
+                campaigns={allActiveCampaigns}
                 onSuccess={handleFormSuccess}
                 selectedSlot={selectedSlot}
             />

@@ -344,3 +344,50 @@ export const deleteCampaign = async (id: string): Promise<void> => {
     }
 };
 
+// Buscar TODAS as campanhas ativas/agendadas para visualização de slots (slots são globais)
+export const getAllActiveCampaignsForSlots = async (): Promise<Campaign[]> => {
+    try {
+        const session = await auth0.getSession();
+        if (!session) {
+            throw new Error("Usuário não autenticado");
+        }
+
+        // Buscar todas as campanhas ativas/agendadas sem filtrar por marketId
+        const response = await fetch(`${baseUrl}/api/v1/campaigns/carousel`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${session.tokenSet.idToken}`,
+            },
+            cache: "no-store",
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                throw new Error("Usuário não autenticado");
+            }
+            const errorData = await response.json().catch(() => ({ message: "Erro ao buscar campanhas" }));
+            throw new Error(errorData.message || "Erro ao buscar campanhas");
+        }
+
+        const data = (await response.json()) as CampaignResponse[];
+        return data.map(
+            (campaign) => ({
+                id: campaign.id,
+                marketId: campaign.marketId,
+                title: campaign.title,
+                imageUrl: campaign.imageUrl,
+                slot: campaign.slot,
+                startDate: new Date(campaign.startDate),
+                endDate: campaign.endDate ? new Date(campaign.endDate) : null,
+                status: campaign.status,
+                createdAt: new Date(campaign.createdAt),
+                updatedAt: new Date(campaign.updatedAt),
+            } as Campaign)
+        );
+    } catch (error) {
+        console.error("Erro ao buscar campanhas:", error);
+        throw error;
+    }
+};
+

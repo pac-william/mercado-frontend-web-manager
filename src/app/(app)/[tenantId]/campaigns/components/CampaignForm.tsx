@@ -196,25 +196,9 @@ export function CampaignForm({
             }
         }
 
-        // Verifica conflito de slot (apenas se estiver criando nova campanha)
+        // Verifica conflito de slot (slots são globais - verificar TODAS as campanhas)
         if (!campaign) {
-            const conflictingCampaign = campaigns.find(
-                (c) =>
-                    c.slot === values.slot &&
-                    (c.status === "ACTIVE" || c.status === "SCHEDULED" || c.status === "DRAFT")
-            );
-
-            if (conflictingCampaign) {
-                form.setError("slot", {
-                    message: `Slot ${values.slot} já possui uma campanha. Clique no slot para editá-la.`,
-                });
-                toast.error(
-                    `Slot ${values.slot} já possui uma campanha (${conflictingCampaign.title}). Clique no slot para editá-la.`
-                );
-                return;
-            }
-
-            // Verifica sobreposição de datas com outras campanhas no mesmo slot
+            // Verifica sobreposição de datas com outras campanhas no mesmo slot (de QUALQUER mercado)
             if (
                 checkSlotConflict(
                     values.slot,
@@ -223,12 +207,28 @@ export function CampaignForm({
                     undefined
                 )
             ) {
-                form.setError("slot", {
-                    message: `Slot ${values.slot} já está ocupado ou agendado neste período`,
-                });
-                toast.error(
-                    `Slot ${values.slot} já está ocupado ou agendado neste período`
+                const conflictingCampaign = campaigns.find(
+                    (c) =>
+                        c.slot === values.slot &&
+                        (c.status === "ACTIVE" || c.status === "SCHEDULED" || c.status === "DRAFT") &&
+                        c.marketId !== marketId // Pode ter conflito com outro mercado
                 );
+                
+                if (conflictingCampaign && conflictingCampaign.marketId !== marketId) {
+                    form.setError("slot", {
+                        message: `Slot ${values.slot} já está ocupado por outro mercado neste período`,
+                    });
+                    toast.error(
+                        `Slot ${values.slot} já está ocupado por outro mercado neste período. Escolha outro período ou slot.`
+                    );
+                } else {
+                    form.setError("slot", {
+                        message: `Slot ${values.slot} já está ocupado ou agendado neste período`,
+                    });
+                    toast.error(
+                        `Slot ${values.slot} já está ocupado ou agendado neste período`
+                    );
+                }
                 return;
             }
         } else {
@@ -241,12 +241,29 @@ export function CampaignForm({
                     campaign.id
                 )
             ) {
-                form.setError("slot", {
-                    message: `Slot ${values.slot} já está ocupado ou agendado neste período`,
-                });
-                toast.error(
-                    `Slot ${values.slot} já está ocupado ou agendado neste período`
+                const conflictingCampaign = campaigns.find(
+                    (c) =>
+                        c.slot === values.slot &&
+                        c.id !== campaign.id &&
+                        (c.status === "ACTIVE" || c.status === "SCHEDULED" || c.status === "DRAFT") &&
+                        c.marketId !== marketId // Pode ter conflito com outro mercado
                 );
+                
+                if (conflictingCampaign && conflictingCampaign.marketId !== marketId) {
+                    form.setError("slot", {
+                        message: `Slot ${values.slot} já está ocupado por outro mercado neste período`,
+                    });
+                    toast.error(
+                        `Slot ${values.slot} já está ocupado por outro mercado neste período. Escolha outro período ou slot.`
+                    );
+                } else {
+                    form.setError("slot", {
+                        message: `Slot ${values.slot} já está ocupado ou agendado neste período`,
+                    });
+                    toast.error(
+                        `Slot ${values.slot} já está ocupado ou agendado neste período`
+                    );
+                }
                 return;
             }
         }
