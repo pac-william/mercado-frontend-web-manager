@@ -18,6 +18,7 @@ import {
     FileText,
     Home,
     LayoutDashboard,
+    Megaphone,
     MessagesSquare,
     Package,
     Receipt,
@@ -78,6 +79,11 @@ export default function AdminSidebar({ tenantId, isOwner }: AdminSidebarProps) {
             title: "Pedidos",
             href: `/${tenantId}/orders`,
             icon: Receipt,
+        },
+        {
+            title: "Campanhas",
+            href: `/${tenantId}/campaigns`,
+            icon: Megaphone,
         },
         {
             title: "Entrega",

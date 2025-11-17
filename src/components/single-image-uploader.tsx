@@ -10,7 +10,7 @@ import {
 import { cn } from "@/lib/utils"
 import { useEffect } from "react"
 
-export default function SingleImageUploader({ className, onImageChange }: { className?: string, onImageChange?: (image: string) => void }) {
+export default function SingleImageUploader({ className, onImageChange }: { className?: string, onImageChange?: (image: string, file?: File) => void }) {
   const maxSize = 10 * 1024 * 1024 // 10MB default
 
   const [
@@ -33,9 +33,12 @@ export default function SingleImageUploader({ className, onImageChange }: { clas
   useEffect(() => {
     if (file && onImageChange) {
       const imageUrl = file.file instanceof File ? URL.createObjectURL(file.file) : file.file.url;
-      onImageChange(imageUrl);
+      const fileToPass = file.file instanceof File ? file.file : undefined;
+      onImageChange(imageUrl, fileToPass);
+    } else if (!file && onImageChange && files.length === 0) {
+      onImageChange("", undefined);
     }
-  }, [file, onImageChange]);
+  }, [file, files.length, onImageChange]);
 
     return (
     <div className={cn("flex flex-col gap-2", className)}>
