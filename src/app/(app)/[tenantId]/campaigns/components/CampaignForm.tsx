@@ -103,7 +103,7 @@ export function CampaignForm({
                 status: campaign.status,
             });
             setImagePreview(campaign.imageUrl);
-            setUploadedImageFile(null); // Limpar arquivo quando carregar campanha existente
+            setUploadedImageFile(null);
         } else {
             form.reset({
                 marketId,
@@ -115,7 +115,7 @@ export function CampaignForm({
                 status: "DRAFT",
             });
             setImagePreview(null);
-            setUploadedImageFile(null); // Limpar arquivo quando criar nova campanha
+            setUploadedImageFile(null);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [campaign?.id, marketId, initialSelectedSlot]);
@@ -123,11 +123,9 @@ export function CampaignForm({
     const handleImageChange = useCallback((imageUrl: string, file?: File) => {
         form.setValue("imageUrl", imageUrl);
         setImagePreview(imageUrl);
-        // Se for uma URL blob (arquivo novo), armazenar o arquivo para upload posterior
         if (file && imageUrl.startsWith("blob:")) {
             setUploadedImageFile(file);
         } else if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
-            // Se for uma URL HTTP/HTTPS, significa que já está salva no servidor
             setUploadedImageFile(null);
         } else {
             setUploadedImageFile(null);
@@ -154,7 +152,6 @@ export function CampaignForm({
             ? new Date(conflictingCampaign.endDate)
             : null;
 
-        // Verifica se há sobreposição de datas
         if (endDate) {
             return (
                 (startDate >= conflictStart && startDate <= (conflictEnd || new Date())) ||
@@ -162,7 +159,6 @@ export function CampaignForm({
                 (startDate <= conflictStart && endDate >= (conflictEnd || new Date()))
             );
         } else {
-            // Se não tem data de fim, verifica se começa antes do fim do conflito
             return startDate <= (conflictEnd || new Date());
         }
     };
@@ -176,7 +172,6 @@ export function CampaignForm({
         const startDate = new Date(values.startDate);
         const endDate = values.endDate ? new Date(values.endDate) : null;
 
-        // Validação de datas
         if (endDate && endDate <= startDate) {
             form.setError("endDate", {
                 message: "Data de fim deve ser posterior à data de início",
@@ -184,7 +179,6 @@ export function CampaignForm({
             return;
         }
 
-        // Validação: máximo de 1 semana (7 dias) entre início e fim
         if (endDate) {
             const daysDifference = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
             if (daysDifference > 7) {
@@ -196,9 +190,7 @@ export function CampaignForm({
             }
         }
 
-        // Verifica conflito de slot (slots são globais - verificar TODAS as campanhas)
         if (!campaign) {
-            // Verifica sobreposição de datas com outras campanhas no mesmo slot (de QUALQUER mercado)
             if (
                 checkSlotConflict(
                     values.slot,
@@ -211,7 +203,7 @@ export function CampaignForm({
                     (c) =>
                         c.slot === values.slot &&
                         (c.status === "ACTIVE" || c.status === "SCHEDULED" || c.status === "DRAFT") &&
-                        c.marketId !== marketId // Pode ter conflito com outro mercado
+                        c.marketId !== marketId
                 );
                 
                 if (conflictingCampaign && conflictingCampaign.marketId !== marketId) {
@@ -232,7 +224,6 @@ export function CampaignForm({
                 return;
             }
         } else {
-            // Ao editar, verifica conflito excluindo a própria campanha
             if (
                 checkSlotConflict(
                     values.slot,
@@ -246,7 +237,7 @@ export function CampaignForm({
                         c.slot === values.slot &&
                         c.id !== campaign.id &&
                         (c.status === "ACTIVE" || c.status === "SCHEDULED" || c.status === "DRAFT") &&
-                        c.marketId !== marketId // Pode ter conflito com outro mercado
+                        c.marketId !== marketId
                 );
                 
                 if (conflictingCampaign && conflictingCampaign.marketId !== marketId) {
@@ -271,8 +262,6 @@ export function CampaignForm({
         startTransition(async () => {
             try {
                 let finalImageUrl = values.imageUrl;
-
-                // Se houver um arquivo novo para upload (blob URL), fazer upload primeiro
                 if (uploadedImageFile) {
                     try {
                         const uploadResult = await uploadFile({
