@@ -106,11 +106,10 @@ export type MarketCreateInitialData = Partial<MarketCreateFormValues> & {
 }
 
 type MarketCreateClientProps = {
-    tenantId: string
     initialMarket: MarketCreateInitialData
 }
 
-export function MarketCreateClient({ tenantId, initialMarket }: MarketCreateClientProps) {
+export function MarketCreateClient({ initialMarket }: MarketCreateClientProps) {
     const router = useRouter()
     const [isSaving, setIsSaving] = useState(false)
     const [finalImageUrl, setFinalImageUrl] = useState<string | null>(initialMarket.profilePicture ?? null)
@@ -294,7 +293,7 @@ export function MarketCreateClient({ tenantId, initialMarket }: MarketCreateClie
                 await createMarket(payload)
 
                 toast.success("Mercado cadastrado com sucesso.")
-                router.push(`/${tenantId}/dashboard`)
+                router.push(`/`)
             } catch (error) {
                 console.error(error)
                 const errorMessage = error instanceof Error ? error.message : "Não foi possível cadastrar o mercado."
@@ -303,7 +302,7 @@ export function MarketCreateClient({ tenantId, initialMarket }: MarketCreateClie
                 setIsSaving(false)
             }
         },
-        [finalImageFile, initialMarket.managersIds, initialMarket.ownerId, isSaving, router, tenantId]
+        [finalImageFile, initialMarket.managersIds, initialMarket.ownerId, isSaving, router]
     )
 
     return (

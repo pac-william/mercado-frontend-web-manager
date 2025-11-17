@@ -3,16 +3,7 @@ import { HeaderInfo } from "@/app/components/HeaderInfo";
 import RouterBack from "@/components/RouterBack";
 import { MarketCreateClient, type MarketCreateInitialData } from "./components/MarketCreateClient";
 
-type CreateMarketPageParams = {
-    tenantId: string;
-}
-
-type CreateMarketPageProps = {
-    params: Promise<CreateMarketPageParams>;
-}
-
-export default async function CreateMarketPage({ params }: CreateMarketPageProps) {
-    const { tenantId } = await params;
+export default async function CreateMarketPage() {
     const currentUser = await getUserMe();
 
     const initialMarket: MarketCreateInitialData = {
@@ -28,7 +19,7 @@ export default async function CreateMarketPage({ params }: CreateMarketPageProps
             <div className="flex flex-col flex-1 gap-6">
                 <RouterBack />
                 <HeaderInfo title="Cadastro de Mercado" description="Cadastre um novo mercado para gerenciar seus produtos e pedidos." />
-                <MarketCreateClient tenantId={tenantId} initialMarket={initialMarket} />
+                <MarketCreateClient initialMarket={initialMarket} />
             </div>
         </div>
     )

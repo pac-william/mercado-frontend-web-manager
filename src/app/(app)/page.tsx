@@ -1,25 +1,27 @@
 import { getMarkets } from "@/actions/market.actions";
+import { getUserMe } from "@/actions/user.actions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { auth0 } from "@/lib/auth0";
 import { Plus } from "lucide-react";
+import moment from "moment";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { MarketsList } from "./components/MarketsList";
+moment.locale("pt-br");
 
 export default async function Home() {
 
-    const tenant = {
-        name: "Mercado Manager Brasil",
-        code: "TEN-4821",
-        owner: "Romul Silva",
-        plan: "Plano Enterprise",
-        since: "Março/2024",
-        markets: 5,
-        status: "Ativo",
-        logo: null,
-    };
+    const session = await auth0.getSession();
+
+    if (!session) {
+        redirect("/auth/login");
+    }
+
+    const user = await getUserMe();
 
     const getInitials = (value: string) =>
         value
@@ -29,14 +31,23 @@ export default async function Home() {
             .map((part) => part.charAt(0).toUpperCase())
             .join("") || "MM";
 
-    const { markets } = await getMarkets({ page: 1, size: 10, ownerId: "69011ba353c5aabb5c5dd8d7" });
-    
-    enum Status {
-        Aberto = "Aberto",
-        Fechado = "Fechado",
-    }
-    const status: Status = Status.Aberto;
+    console.log(user);
 
+    const { markets } = await getMarkets({ page: 1, size: 10, ownerId: user.id });
+
+
+    const getRoleName = (role: string) => {
+        switch (role) {
+            case "OWNER":
+                return "Proprietário";
+            case "MANAGER":
+                return "Gerente";
+            case "CUSTOMER":
+                return "Cliente";
+            default:
+                return role;
+        }
+    }
 
     return (
         <div className="flex flex-col flex-1 h-screen p-6 gap-6 container mx-auto">
@@ -44,24 +55,26 @@ export default async function Home() {
                 <CardHeader className="gap-6 md:flex md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-4">
                         <Avatar className="h-16 w-16 border border-primary/30 bg-background shadow-sm">
-                            <AvatarImage src={tenant.logo ?? undefined} alt={tenant.name} />
+                            <AvatarImage src={user.profilePicture ?? undefined} alt={user.email ?? ""} />
                             <AvatarFallback className="text-lg font-semibold">
-                                {getInitials(tenant.name)}
+                                {getInitials(user.name ?? "")}
                             </AvatarFallback>
                         </Avatar>
                         <div>
-                            <CardTitle className="text-3xl">{tenant.name}</CardTitle>
+                            <CardTitle className="text-3xl">{user.name}</CardTitle>
                             <CardDescription>
-                                Código: {tenant.code} · Plano atual: {tenant.plan}
+                                Código: {user.id} · Plano atual: {getRoleName(user.role as "OWNER" | "MANAGER" | "CUSTOMER")}
                             </CardDescription>
                         </div>
                     </div>
                     <div className="grid gap-1 text-sm text-muted-foreground md:text-right">
-                        <span><span className="font-semibold text-foreground">Responsável:</span> {tenant.owner}</span>
-                        <span><span className="font-semibold text-foreground">Desde:</span> {tenant.since}</span>
-                        <span><span className="font-semibold text-foreground">Mercados ativos:</span> {tenant.markets}</span>
+                        <span><span className="font-semibold text-foreground">Responsável:</span> {user.name}</span>
+                        <span>
+                            <span className="font-semibold text-foreground">Desde:</span> {moment(user.createdAt).format("LL")}
+                        </span>
+                        <span><span className="font-semibold text-foreground">Mercados ativos:</span> {markets.length}</span>
                         <span className="uppercase tracking-wide text-primary">
-                            {tenant.status}
+                            {user.role}
                         </span>
                     </div>
                 </CardHeader>
@@ -82,37 +95,7 @@ export default async function Home() {
                 <Separator />
                 <CardContent className="flex flex-col flex-1 p-0 m-4">
                     <ScrollArea className="flex flex-col flex-grow h-0 overflow-y-auto pr-4">
-                         <div className="flex flex-col gap-4">
-                             {markets.map((market) => {
-                                 const isOpen = status === Status.Aberto;
-                                 return (
-                                     <Link key={market.id} href={`/${market.id}/dashboard`}>
-                                         <Card className="flex flex-row flex-1 border border-muted hover:border-primary/30 hover:bg-primary/5 transition-all duration-300">
-                                             <CardHeader className="flex flex-row flex-1 items-center gap-4">
-                                                 <Avatar className="h-16 w-16">
-                                                     <AvatarImage src={market.profilePicture ?? undefined} alt={market.name} />
-                                                     <AvatarFallback className="text-lg font-semibold">
-                                                         {getInitials(market.name)}
-                                                     </AvatarFallback>
-                                                 </Avatar>
-                                                 <div className="flex flex-col gap-1">
-                                                     <CardTitle className="text-2xl">{market.name}</CardTitle>
-                                                     <CardDescription>{market.address}</CardDescription>
-                                                 </div>
-                                             </CardHeader>
-                                             <CardContent className="flex items-center justify-center">
-                                                 <Badge variant="outline" className="flex items-center justify-center gap-2">
-                                                     <span className="relative flex size-2">
-                                                         <span className={`relative inline-flex size-2 rounded-full ${isOpen ? "bg-green-500" : "bg-red-500"}`}></span>
-                                                     </span>
-                                                     <span>{isOpen ? "Aberto" : "Fechado"}</span>
-                                                 </Badge>
-                                             </CardContent>
-                                         </Card>
-                                     </Link>
-                                 );
-                             })}
-                        </div>
+                        <MarketsList markets={markets} />
                     </ScrollArea>
                 </CardContent>
             </Card>
