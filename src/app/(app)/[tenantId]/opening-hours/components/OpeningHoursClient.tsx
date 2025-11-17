@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { z } from "zod"
 
-import { getOpeningHours, saveOpeningHours, type OpeningHoursDay } from "@/actions/opening-hours.actions"
+import { getOpeningHours, saveOpeningHours } from "@/actions/opening-hours.actions"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"

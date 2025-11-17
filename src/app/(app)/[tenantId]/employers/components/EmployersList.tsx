@@ -114,7 +114,7 @@ export function EmployersList() {
             try {
                 await updateUser(employeeId, { role: newRole });
                 toast.success(`Role de ${previousEmployee.name} atualizada para ${roleLabels[newRole]}`);
-            } catch (error) {
+            } catch {
                 // Se falhar, reverter a mudança local
                 setEmployees((prev) =>
                     prev.map((emp) =>
@@ -124,7 +124,7 @@ export function EmployersList() {
                 // Mas ainda mostrar sucesso pois é mock
                 toast.success(`Role de ${previousEmployee.name} atualizada para ${roleLabels[newRole]} (mock)`);
             }
-        } catch (error) {
+        } catch {
             toast.error("Erro ao atualizar role do funcionário");
             // Reverter mudança local em caso de erro
             setEmployees((prev) =>
