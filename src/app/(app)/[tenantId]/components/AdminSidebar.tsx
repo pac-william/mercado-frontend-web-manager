@@ -12,6 +12,8 @@ import {
     SidebarMenuItem
 } from "@/components/ui/sidebar";
 import {
+    Briefcase,
+    Clock,
     CreditCard,
     FileText,
     Home,
@@ -32,9 +34,10 @@ import { useEffect, useState } from "react";
 
 interface AdminSidebarProps {
     tenantId: string;
+    isOwner: boolean;
 }
 
-export default function AdminSidebar({ tenantId }: AdminSidebarProps) {
+export default function AdminSidebar({ tenantId, isOwner }: AdminSidebarProps) {
     const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
 
     useEffect(() => {
@@ -54,7 +57,8 @@ export default function AdminSidebar({ tenantId }: AdminSidebarProps) {
         return () => clearInterval(interval);
     }, [tenantId]);
 
-    const menuItems = [
+    // Itens do menu que gerentes têm acesso
+    const managerMenuItems = [
         {
             title: "Meus mercados",
             href: `/`,
@@ -90,10 +94,24 @@ export default function AdminSidebar({ tenantId }: AdminSidebarProps) {
             href: `/${tenantId}/support`,
             icon: MessagesSquare,
         },
+    ];
+
+    // Itens do menu que apenas proprietários têm acesso
+    const ownerOnlyMenuItems = [
         {
             title: "Usuários",
             href: `/${tenantId}/users`,
             icon: Users,
+        },
+        {
+            title: "Funcionários",
+            href: `/${tenantId}/employers`,
+            icon: Briefcase,
+        },
+        {
+            title: "Horários de funcionamento",
+            href: `/${tenantId}/opening-hours`,
+            icon: Clock,
         },
         {
             title: "Relatórios",
@@ -122,7 +140,7 @@ export default function AdminSidebar({ tenantId }: AdminSidebarProps) {
                     <SidebarGroupLabel>Gerenciamento</SidebarGroupLabel>
                     <SidebarGroupContent>
                         <SidebarMenu>
-                            {menuItems.map((item) => {
+                            {managerMenuItems.map((item) => {
                                 const Icon = item.icon;
                                 const isActive =
                                     pathname === item.href ||
@@ -154,6 +172,39 @@ export default function AdminSidebar({ tenantId }: AdminSidebarProps) {
                         </SidebarMenu>
                     </SidebarGroupContent>
                 </SidebarGroup>
+                {isOwner && ownerOnlyMenuItems.length > 0 && (
+                    <SidebarGroup>
+                        <SidebarGroupLabel>Administração</SidebarGroupLabel>
+                        <SidebarGroupContent>
+                            <SidebarMenu>
+                                {ownerOnlyMenuItems.map((item) => {
+                                    const Icon = item.icon;
+                                    const isActive =
+                                        pathname === item.href ||
+                                        pathname?.startsWith(item.href + "/");
+
+                                    return (
+                                        <SidebarMenuItem key={item.href}>
+                                            <SidebarMenuButton
+                                                asChild
+                                                isActive={isActive}
+                                                tooltip={item.title}
+                                            >
+                                                <Link
+                                                    href={item.href}
+                                                    className="flex items-center gap-3 relative"
+                                                >
+                                                    <Icon className="h-4 w-4" />
+                                                    <span>{item.title}</span>
+                                                </Link>
+                                            </SidebarMenuButton>
+                                        </SidebarMenuItem>
+                                    );
+                                })}
+                            </SidebarMenu>
+                        </SidebarGroupContent>
+                    </SidebarGroup>
+                )}
             </SidebarContent>
         </Sidebar>
     );

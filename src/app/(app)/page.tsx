@@ -13,6 +13,8 @@ import { redirect } from "next/navigation";
 import { MarketsList } from "./components/MarketsList";
 moment.locale("pt-br");
 
+export type Role = "OWNER" | "MANAGER" | "CUSTOMER";
+
 export default async function Home() {
 
     const session = await auth0.getSession();
@@ -31,12 +33,10 @@ export default async function Home() {
             .map((part) => part.charAt(0).toUpperCase())
             .join("") || "MM";
 
-    console.log(user);
-
-    const { markets } = await getMarkets({ page: 1, size: 10, ownerId: user.id });
+        const { markets } = await getMarkets({ page: 1, size: 10, ownerId: user.id });
 
 
-    const getRoleName = (role: string) => {
+    const getRoleName = (role: Role) => {
         switch (role) {
             case "OWNER":
                 return "Proprietário";
@@ -48,6 +48,7 @@ export default async function Home() {
                 return role;
         }
     }
+    
 
     return (
         <div className="flex flex-col flex-1 h-screen p-6 gap-6 container mx-auto">
@@ -63,7 +64,7 @@ export default async function Home() {
                         <div>
                             <CardTitle className="text-3xl">{user.name}</CardTitle>
                             <CardDescription>
-                                Código: {user.id} · Plano atual: {getRoleName(user.role as "OWNER" | "MANAGER" | "CUSTOMER")}
+                                Código: {user.id} · Plano atual: {getRoleName(user.role as Role)}
                             </CardDescription>
                         </div>
                     </div>
@@ -74,7 +75,7 @@ export default async function Home() {
                         </span>
                         <span><span className="font-semibold text-foreground">Mercados ativos:</span> {markets.length}</span>
                         <span className="uppercase tracking-wide text-primary">
-                            {user.role}
+                            {getRoleName(user.role as Role)}
                         </span>
                     </div>
                 </CardHeader>

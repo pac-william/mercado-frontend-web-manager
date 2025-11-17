@@ -10,6 +10,7 @@ export const UserDTO = z.object({
     gender: z.string().optional(),
     address: z.string().optional(),
     auth0Id: z.string().optional(),
+    role: z.string().optional(),
 });
 
 export type UserDTO = z.infer<typeof UserDTO>;
