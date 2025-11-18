@@ -1,6 +1,6 @@
 "use client"
 
-import { createDeliverer, updateDeliverer, getDelivererById } from "@/actions/deliverer.actions";
+import { createDeliverer, getDelivererById, updateDeliverer } from "@/actions/deliverer.actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -9,8 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { DelivererDTO } from "@/dtos/delivererDTO";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigationWithLoading } from "@/hooks/useNavigationWithLoading";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -105,7 +105,7 @@ export const DelivererCreateForm = ({ tenantId, delivererId }: DelivererCreateFo
                 await createDeliverer(delivererData);
                 toast.success("Entregador cadastrado com sucesso");
             }
-            navigate(`/${tenantId}/deliverers`, "Redirecionando...");
+            navigate(`/${tenantId}/deliverers`);
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : isEditing ? "Erro ao atualizar entregador" : "Erro ao cadastrar entregador";
             toast.error(errorMessage);

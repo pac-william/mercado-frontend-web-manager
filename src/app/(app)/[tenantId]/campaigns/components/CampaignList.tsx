@@ -1,23 +1,7 @@
 "use client";
 
+import { activateCampaign, deactivateCampaign, deleteCampaign } from "@/actions/campaign.actions";
 import { Campaign, CampaignStatus } from "@/app/domain/campaignDomain";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -28,18 +12,34 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { activateCampaign, deactivateCampaign, deleteCampaign } from "@/actions/campaign.actions";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
 import { Edit, MoreVertical, Power, PowerOff, Trash2 } from "lucide-react";
+import moment from "moment";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
-import moment from "moment";
 
 interface CampaignListProps {
     campaigns: Campaign[];
@@ -133,7 +133,7 @@ export function CampaignList({ campaigns, onEdit, onRefresh }: CampaignListProps
             <div className="text-center py-12 text-muted-foreground">
                 <p>Nenhuma campanha cadastrada ainda.</p>
                 <p className="text-sm mt-2">
-                    Clique em "Nova Campanha" para começar.
+                    Clique em &quot;Nova Campanha&quot; para começar.
                 </p>
             </div>
         );
@@ -274,8 +274,8 @@ export function CampaignList({ campaigns, onEdit, onRefresh }: CampaignListProps
                     <AlertDialogHeader>
                         <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Tem certeza que deseja excluir a campanha "
-                            {campaignToDelete?.title}"? Esta ação não pode ser
+                            Tem certeza que deseja excluir a campanha &quot;
+                            {campaignToDelete?.title}&quot;? Esta ação não pode ser
                             desfeita.
                         </AlertDialogDescription>
                     </AlertDialogHeader>

@@ -3,15 +3,12 @@
 import Link from "next/link";
 import { ComponentPropsWithoutRef } from "react";
 
-interface LinkWithLoadingProps extends ComponentPropsWithoutRef<typeof Link> {
-  message?: string;
-}
+type LinkWithLoadingProps = ComponentPropsWithoutRef<typeof Link>;
 
 export default function LinkWithLoading({ 
   href, 
   children, 
   className, 
-  message,
   ...props 
 }: LinkWithLoadingProps) {
 

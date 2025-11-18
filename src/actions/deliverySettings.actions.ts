@@ -2,7 +2,7 @@
 
 import { DeliverySettings } from "@/app/domain/deliverySettingsDomain";
 import { baseUrl } from "@/config/server";
-import { DeliverySettingsDTO, DeliverySettingsUpdateDTO } from "@/dtos/deliverySettingsDTO";
+import { DeliverySettingsDTO } from "@/dtos/deliverySettingsDTO";
 import { auth0 } from "@/lib/auth0";
 
 type ValidationErrorResponse = {

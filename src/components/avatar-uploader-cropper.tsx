@@ -7,6 +7,7 @@ import {
   ZoomInIcon,
   ZoomOutIcon,
 } from "lucide-react"
+import NextImage from "next/image"
 import { useCallback, useEffect, useRef, useState } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -208,13 +209,14 @@ export default function AvatarUploaderCropper() {
           aria-label={finalImageUrl ? "Change image" : "Upload image"}
         >
           {finalImageUrl ? (
-            <img
+            <NextImage
               className="size-full object-cover"
               src={finalImageUrl}
               alt="User avatar"
               width={64}
               height={64}
               style={{ objectFit: "cover" }}
+              unoptimized
             />
           ) : (
             <div aria-hidden="true">

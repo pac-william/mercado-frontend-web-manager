@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 export function useNavigationWithLoading() {
   const router = useRouter();
 
-  const navigate = (path: string, message?: string) => {
+  const navigate = (path: string) => {
     router.push(path);
   };
 

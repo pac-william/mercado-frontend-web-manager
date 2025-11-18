@@ -1,11 +1,9 @@
 "use client";
 
+import { createCampaign, updateCampaign } from "@/actions/campaign.actions";
+import { uploadFile } from "@/actions/upload.actions";
 import { Campaign } from "@/app/domain/campaignDomain";
-import { CampaignDTO, CampaignUpdateDTO } from "@/dtos/campaignDTO";
-import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition, useCallback } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
+import SingleImageUploader from "@/components/single-image-uploader";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -31,11 +29,14 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import SingleImageUploader from "@/components/single-image-uploader";
-import { createCampaign, updateCampaign } from "@/actions/campaign.actions";
-import { uploadFile } from "@/actions/upload.actions";
+import { CampaignDTO, CampaignUpdateDTO } from "@/dtos/campaignDTO";
 import { Loader2 } from "lucide-react";
 import moment from "moment";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState, useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 interface CampaignFormProps {
     open: boolean;
@@ -422,10 +423,12 @@ export function CampaignForm({
                                             />
                                             {imagePreview && (
                                                 <div className="relative w-full h-48 rounded-lg border overflow-hidden">
-                                                    <img
+                                                    <Image
                                                         src={imagePreview}
                                                         alt="Preview"
-                                                        className="w-full h-full object-cover"
+                                                        fill
+                                                        className="object-cover"
+                                                        unoptimized
                                                     />
                                                 </div>
                                             )}

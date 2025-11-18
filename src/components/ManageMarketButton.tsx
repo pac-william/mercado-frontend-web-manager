@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import LoadingSpinner from "@/components/LoadingSpinner";
 import { useNavigationWithLoading } from "@/hooks/useNavigationWithLoading";
 
 interface ManageMarketButtonProps {
@@ -13,7 +12,7 @@ export default function ManageMarketButton({ marketId }: ManageMarketButtonProps
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    navigate(`/${marketId}/dashboard`, "Carregando dashboard...");
+    navigate(`/${marketId}/dashboard`);
   };
 
   return (
