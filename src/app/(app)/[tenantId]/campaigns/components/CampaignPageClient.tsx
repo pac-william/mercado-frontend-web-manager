@@ -30,11 +30,9 @@ export default function CampaignPageClient({
 
     const handleRefresh = async () => {
         try {
-            // Buscar campanhas do mercado atual
             const updatedCampaigns = await getCampaignsByMarket(tenantId);
             setCampaigns(updatedCampaigns);
-            
-            // Buscar TODAS as campanhas ativas/agendadas para visualização de slots (slots são globais)
+        
             const allActive = await getAllActiveCampaignsForSlots();
             setAllActiveCampaigns(allActive);
             
@@ -48,7 +46,6 @@ export default function CampaignPageClient({
         }
     };
 
-    // Carregar todas as campanhas ativas na inicialização
     useEffect(() => {
         const loadAllActiveCampaigns = async () => {
             try {
@@ -74,17 +71,14 @@ export default function CampaignPageClient({
     };
 
     const handleSlotClick = (slot: number) => {
-        // Verificar se há campanha neste slot do mercado atual (para edição)
         const ownCampaign = campaigns.find(
             (c) => c.slot === slot && (c.status === "ACTIVE" || c.status === "SCHEDULED" || c.status === "DRAFT")
         );
         
-        // Se existe campanha deste mercado no slot, permitir editar
         if (ownCampaign) {
             setEditingCampaign(ownCampaign);
             setSelectedSlot(slot);
         } else {
-            // Verificar se há campanha de OUTRO mercado neste slot
             const otherMarketCampaign = allActiveCampaigns.find(
                 (c) => c.slot === slot && 
                        (c.status === "ACTIVE" || c.status === "SCHEDULED" || c.status === "DRAFT") &&
@@ -92,8 +86,7 @@ export default function CampaignPageClient({
             );
             
             if (otherMarketCampaign) {
-                // Slot ocupado por outro mercado - avisar mas permitir agendar para outro período
-                toast.warning(`Slot ${slot} está ocupado por outro mercado. Escolha um período diferente.`);
+                toast.warning(`Slot ${slot} está ocupado por outro mercado. Você pode agendar um outro horario.`);
             }
             
             setEditingCampaign(undefined);
