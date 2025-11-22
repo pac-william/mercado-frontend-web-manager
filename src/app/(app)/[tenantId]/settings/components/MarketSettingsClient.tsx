@@ -15,8 +15,8 @@ import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { z } from "zod"
 
-import { createAddress, updateAddress } from "@/actions/address.actions"
 import { updateMarketPartial } from "@/actions/market.actions"
+import { createMarketAddress, updateMarketAddress } from "@/actions/marketAddress.actions"
 import { uploadFile } from "@/actions/upload.actions"
 import { MarketAddressCard } from "@/app/(app)/markets/create/components/MarketAddressCard"
 import { MarketAddressDialog } from "@/app/(app)/markets/create/components/MarketAddressDialog"
@@ -91,9 +91,9 @@ async function getCroppedImg(
                 resolve(blob)
             }, "image/jpeg")
         })
-        } catch {
-            return null
-        }
+    } catch {
+        return null
+    }
 }
 
 const marketSettingsSchema = z.object({
@@ -310,21 +310,18 @@ export function MarketSettingsClient({ tenantId, initialMarket }: MarketSettings
 
                 if (selectedAddress) {
                     if (initialMarket.addressId) {
-                        await updateAddress(initialMarket.addressId, selectedAddress)
+                        await updateMarketAddress(initialMarket.addressId, selectedAddress)
                     } else {
-                        const createdAddress = await createAddress(selectedAddress)
-                        await updateMarketPartial(tenantId, {
-                            addressId: createdAddress.id,
-                        })
+                        await createMarketAddress(tenantId, selectedAddress)
                     }
                 }
 
                 const payload: MarketUpdateDTO = {}
-                
+
                 if (values.name) {
                     payload.name = values.name
                 }
-                
+
                 if (uploadedImageUrl !== undefined) {
                     payload.profilePicture = uploadedImageUrl
                 }
@@ -451,7 +448,6 @@ export function MarketSettingsClient({ tenantId, initialMarket }: MarketSettings
                                             </Button>
                                         )}
                                     </div>
-                                    {/* Diálogo controlado para criar/editar */}
                                     <MarketAddressDialog
                                         initialValues={selectedAddress ?? undefined}
                                         onAddressSelect={(address) => {

@@ -26,7 +26,7 @@ export default async function Layout({ children, params }: TenantLayoutProps) {
     return (
         <div className="flex flex-1 flex-col h-screen bg-background text-foreground">
             <SidebarProvider>
-                <div className="flex flex-1">
+                <div className="flex flex-1 overflow-y-hidden">
                     <AdminSidebar tenantId={tenantId} isOwner={isOwner} />
                     <SidebarInset>
                         <Header market={market} />

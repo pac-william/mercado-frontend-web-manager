@@ -535,7 +535,7 @@ export function MarketAddressDialog({
                                     Cancelar
                                 </Button>
                             </DialogClose>
-                            <Button type="submit" disabled={isFetchingCep}>
+                            <Button type="button" onClick={() => onSubmit(form.getValues())} disabled={isFetchingCep}>
                                 {isFetchingCep
                                     ? "Consultando CEP..."
                                     : "Selecionar endereço"}
