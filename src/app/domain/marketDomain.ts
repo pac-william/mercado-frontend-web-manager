@@ -1,4 +1,5 @@
 import { Meta } from "./metaDomain";
+import { AddressDomain } from "./addressDomain";
 
 export class Market {
     constructor(
@@ -10,6 +11,8 @@ export class Market {
         public managersIds: string[],
         public createdAt: Date,
         public updatedAt: Date,
+        public addressId?: string | null,
+        public addressData?: AddressDomain | null,
     ) { }
 }
 

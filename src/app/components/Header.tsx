@@ -28,7 +28,11 @@ export default async function Header({ market }: HeaderProps) {
                     <div className="rounded-full flex flex-col gap-2">
                         <div className="flex flex-col">
                             <span className="text-sm font-bold text-card-foreground">{market.name}</span>
-                            <span className="text-sm text-muted-foreground">{market.address}</span>
+                            <span className="text-sm text-muted-foreground">
+                                {market.addressData 
+                                    ? `${market.addressData.street}, ${market.addressData.number}${market.addressData.complement ? ` - ${market.addressData.complement}` : ''} - ${market.addressData.neighborhood}, ${market.addressData.city} - ${market.addressData.state}`
+                                    : market.address || 'Endereço não cadastrado'}
+                            </span>
                         </div>
                     </div>
                 </div>

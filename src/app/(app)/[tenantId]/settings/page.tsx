@@ -17,25 +17,63 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
 
     let initialMarket: MarketSettingsInitialData = {
         name: "",
-        address: "",
         profilePicture: null,
         isActive: true,
         ownerId: null,
         managersIds: [],
+        addressId: null,
+        address: null,
     }
 
     try {
         const market = await getMarketById(tenantId)
+        const marketAny = market as typeof market & {
+            addressData?: {
+                id: string
+                userId: string | null
+                marketId: string | null
+                name: string
+                street: string
+                number: string
+                complement: string | null
+                neighborhood: string
+                city: string
+                state: string
+                zipCode: string
+                isFavorite: boolean
+                isActive: boolean
+                latitude: number | null
+                longitude: number | null
+                createdAt: string
+                updatedAt: string
+            }
+            addressId?: string | null
+        }
+        
         initialMarket = {
             name: market.name,
-            address: market.address,
             profilePicture: market.profilePicture,
             isActive: true,
             ownerId: market.ownerId,
             managersIds: market.managersIds,
+            addressId: marketAny.addressId || null,
+            address: marketAny.addressData ? {
+                name: marketAny.addressData.name,
+                street: marketAny.addressData.street,
+                number: marketAny.addressData.number,
+                complement: marketAny.addressData.complement || undefined,
+                neighborhood: marketAny.addressData.neighborhood,
+                city: marketAny.addressData.city,
+                state: marketAny.addressData.state,
+                zipCode: marketAny.addressData.zipCode,
+                isFavorite: marketAny.addressData.isFavorite || false,
+                isActive: marketAny.addressData.isActive ?? true,
+                latitude: marketAny.addressData.latitude || undefined,
+                longitude: marketAny.addressData.longitude || undefined,
+            } : null,
         }
-    } catch (error) {
-        console.error("Erro ao buscar mercado:", error)
+    } catch {
+        // Ignorar erro
     }
 
     return (

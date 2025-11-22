@@ -8,10 +8,10 @@ export default async function CreateMarketPage() {
 
     const initialMarket: MarketCreateInitialData = {
         name: "",
-        address: "",
         profilePicture: null,
         ownerId: currentUser.id,
         managersIds: [],
+        address: null,
     };
 
     return (

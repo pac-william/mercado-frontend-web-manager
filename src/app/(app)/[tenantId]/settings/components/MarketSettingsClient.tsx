@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import {
     ArrowLeftIcon,
     CircleUserRoundIcon,
+    Plus,
     XIcon,
     ZoomInIcon,
     ZoomOutIcon,
@@ -14,8 +15,11 @@ import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { z } from "zod"
 
-import { updateMarket } from "@/actions/market.actions"
+import { createAddress, updateAddress } from "@/actions/address.actions"
+import { updateMarketPartial } from "@/actions/market.actions"
 import { uploadFile } from "@/actions/upload.actions"
+import { MarketAddressCard } from "@/app/(app)/markets/create/components/MarketAddressCard"
+import { MarketAddressDialog } from "@/app/(app)/markets/create/components/MarketAddressDialog"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -37,6 +41,8 @@ import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
+import { type AddressDTO as AddressFormValues } from "@/dtos/addressDTO"
+import { MarketUpdateDTO } from "@/dtos/marketDTO"
 import { useFileUpload } from "@/hooks/use-file-upload"
 
 type Area = { x: number; y: number; width: number; height: number }
@@ -85,15 +91,13 @@ async function getCroppedImg(
                 resolve(blob)
             }, "image/jpeg")
         })
-    } catch (error) {
-        console.error("Error in getCroppedImg:", error)
-        return null
-    }
+        } catch {
+            return null
+        }
 }
 
 const marketSettingsSchema = z.object({
     name: z.string().min(1, "Nome do mercado é obrigatório"),
-    address: z.string().min(1, "Endereço é obrigatório"),
     contactEmail: z.string().email("E-mail inválido").optional(),
     contactPhone: z.string().optional(),
     whatsappNumber: z.string().optional(),
@@ -107,6 +111,8 @@ export type MarketSettingsInitialData = Partial<MarketSettingsFormValues> & {
     profilePicture?: string | null
     ownerId?: string | null
     managersIds?: string[] | null
+    addressId?: string | null
+    address?: AddressFormValues | null
 }
 
 type MarketSettingsClientProps = {
@@ -121,6 +127,16 @@ export function MarketSettingsClient({ tenantId, initialMarket }: MarketSettings
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
     const [zoom, setZoom] = useState(1)
+    const [selectedAddress, setSelectedAddress] = useState<AddressFormValues | null>(initialMarket.address ?? null)
+    const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false)
+
+    useEffect(() => {
+        if (initialMarket.address) {
+            setSelectedAddress(initialMarket.address)
+        } else {
+            setSelectedAddress(null)
+        }
+    }, [initialMarket.address])
 
     const previousFileIdRef = useRef<string | undefined | null>(null)
 
@@ -149,7 +165,6 @@ export function MarketSettingsClient({ tenantId, initialMarket }: MarketSettings
         resolver: zodResolver(marketSettingsSchema),
         defaultValues: {
             name: initialMarket.name ?? "",
-            address: initialMarket.address ?? "",
             contactEmail: initialMarket.contactEmail ?? undefined,
             contactPhone: initialMarket.contactPhone ?? undefined,
             whatsappNumber: initialMarket.whatsappNumber ?? undefined,
@@ -162,7 +177,6 @@ export function MarketSettingsClient({ tenantId, initialMarket }: MarketSettings
     useEffect(() => {
         form.reset({
             name: initialMarket.name ?? "",
-            address: initialMarket.address ?? "",
             contactEmail: initialMarket.contactEmail ?? undefined,
             contactPhone: initialMarket.contactPhone ?? undefined,
             whatsappNumber: initialMarket.whatsappNumber ?? undefined,
@@ -170,6 +184,7 @@ export function MarketSettingsClient({ tenantId, initialMarket }: MarketSettings
             isActive: initialMarket.isActive ?? true,
         })
         setFinalImageUrl(initialMarket.profilePicture ?? null)
+        setSelectedAddress(initialMarket.address ?? null)
     }, [initialMarket, form])
 
     const handleCropChange = useCallback((pixels: Area | null) => {
@@ -197,7 +212,6 @@ export function MarketSettingsClient({ tenantId, initialMarket }: MarketSettings
 
     const handleApply = useCallback(async () => {
         if (!previewUrl || !fileId || !croppedAreaPixels) {
-            console.error("Missing data for apply:", { previewUrl, fileId, croppedAreaPixels })
             return
         }
 
@@ -226,8 +240,7 @@ export function MarketSettingsClient({ tenantId, initialMarket }: MarketSettings
             form.clearErrors("profilePicture")
 
             closeCropDialog(fileId)
-        } catch (error) {
-            console.error("Error during apply:", error)
+        } catch {
             toast.error("Não foi possível aplicar o recorte da imagem.")
             closeCropDialog(fileId)
         }
@@ -295,37 +308,39 @@ export function MarketSettingsClient({ tenantId, initialMarket }: MarketSettings
                     setFinalImageUrl(uploadResult.url)
                 }
 
-                const payload = {
-                    name: values.name,
-                    address: values.address,
-                    profilePicture: uploadedImageUrl,
-                } as {
-                    name: string
-                    address: string
-                    profilePicture?: string
-                    ownerId?: string
-                    managersIds?: string[]
+                if (selectedAddress) {
+                    if (initialMarket.addressId) {
+                        await updateAddress(initialMarket.addressId, selectedAddress)
+                    } else {
+                        const createdAddress = await createAddress(selectedAddress)
+                        await updateMarketPartial(tenantId, {
+                            addressId: createdAddress.id,
+                        })
+                    }
                 }
 
-                if (initialMarket.ownerId) {
-                    payload.ownerId = initialMarket.ownerId
+                const payload: MarketUpdateDTO = {}
+                
+                if (values.name) {
+                    payload.name = values.name
+                }
+                
+                if (uploadedImageUrl !== undefined) {
+                    payload.profilePicture = uploadedImageUrl
                 }
 
-                if (initialMarket.managersIds && initialMarket.managersIds.length > 0) {
-                    payload.managersIds = initialMarket.managersIds
+                if (Object.keys(payload).length > 0) {
+                    await updateMarketPartial(tenantId, payload)
                 }
-
-                await updateMarket(tenantId, payload)
 
                 toast.success("Configurações salvas com sucesso.")
-            } catch (error) {
-                console.error(error)
+            } catch {
                 toast.error("Não foi possível salvar as configurações.")
             } finally {
                 setIsSaving(false)
             }
         },
-        [finalImageFile, initialMarket.managersIds, initialMarket.ownerId, initialMarket.profilePicture, isSaving, tenantId]
+        [finalImageFile, initialMarket, isSaving, selectedAddress, tenantId]
     )
 
     return (
@@ -415,23 +430,39 @@ export function MarketSettingsClient({ tenantId, initialMarket }: MarketSettings
                                     )}
                                 />
 
-                                <FormField
-                                    control={form.control}
-                                    name="address"
-                                    render={({ field }) => (
-                                        <FormItem className="md:col-span-1">
-                                            <FormLabel>Endereço</FormLabel>
-                                            <FormControl>
-                                                <Input
-                                                    placeholder="Rua, número, bairro, cidade"
-                                                    disabled={isSaving}
-                                                    {...field}
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                                <div className="md:col-span-2">
+                                    <FormLabel>Endereço do mercado</FormLabel>
+                                    <div className="mt-2">
+                                        {selectedAddress ? (
+                                            <MarketAddressCard
+                                                address={selectedAddress}
+                                                onEdit={() => setIsAddressDialogOpen(true)}
+                                                showRemove={false}
+                                            />
+                                        ) : (
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                className="w-full"
+                                                onClick={() => setIsAddressDialogOpen(true)}
+                                            >
+                                                <Plus size={16} className="mr-2" />
+                                                Cadastrar endereço do mercado
+                                            </Button>
+                                        )}
+                                    </div>
+                                    {/* Diálogo controlado para criar/editar */}
+                                    <MarketAddressDialog
+                                        initialValues={selectedAddress ?? undefined}
+                                        onAddressSelect={(address) => {
+                                            setSelectedAddress(address)
+                                            setIsAddressDialogOpen(false)
+                                        }}
+                                        selectedAddress={selectedAddress}
+                                        defaultOpen={isAddressDialogOpen}
+                                        onOpenChange={setIsAddressDialogOpen}
+                                    />
+                                </div>
                             </div>
 
                             <div className="grid gap-4 md:grid-cols-3">

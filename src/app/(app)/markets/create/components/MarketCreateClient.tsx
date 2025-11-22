@@ -36,8 +36,12 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Slider } from "@/components/ui/slider"
+import { type AddressDTO as AddressFormValues } from "@/dtos/addressDTO"
 import { useFileUpload } from "@/hooks/use-file-upload"
+import { Plus } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { MarketAddressCard } from "./MarketAddressCard"
+import { MarketAddressDialog } from "./MarketAddressDialog"
 
 type Area = { x: number; y: number; width: number; height: number }
 
@@ -93,7 +97,6 @@ async function getCroppedImg(
 
 const marketCreateSchema = z.object({
     name: z.string().min(1, "Nome do mercado é obrigatório"),
-    address: z.string().min(1, "Endereço é obrigatório"),
     profilePicture: z.any().optional(),
 })
 
@@ -103,6 +106,7 @@ export type MarketCreateInitialData = Partial<MarketCreateFormValues> & {
     profilePicture?: string | null
     ownerId?: string | null
     managersIds?: string[] | null
+    address?: AddressFormValues | null
 }
 
 type MarketCreateClientProps = {
@@ -117,6 +121,8 @@ export function MarketCreateClient({ initialMarket }: MarketCreateClientProps) {
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
     const [zoom, setZoom] = useState(1)
+    const [selectedAddress, setSelectedAddress] = useState<AddressFormValues | null>(initialMarket.address ?? null)
+    const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false)
 
     const previousFileIdRef = useRef<string | undefined | null>(null)
 
@@ -145,7 +151,6 @@ export function MarketCreateClient({ initialMarket }: MarketCreateClientProps) {
         resolver: zodResolver(marketCreateSchema),
         defaultValues: {
             name: initialMarket.name ?? "",
-            address: initialMarket.address ?? "",
             profilePicture: undefined,
         },
         mode: "onChange",
@@ -154,10 +159,10 @@ export function MarketCreateClient({ initialMarket }: MarketCreateClientProps) {
     useEffect(() => {
         form.reset({
             name: initialMarket.name ?? "",
-            address: initialMarket.address ?? "",
             profilePicture: undefined,
         })
         setFinalImageUrl(initialMarket.profilePicture ?? null)
+        setSelectedAddress(initialMarket.address ?? null)
     }, [initialMarket, form])
 
     const handleCropChange = useCallback((pixels: Area | null) => {
@@ -282,9 +287,15 @@ export function MarketCreateClient({ initialMarket }: MarketCreateClientProps) {
                     setFinalImageUrl(uploadResult.url)
                 }
 
+                if (!selectedAddress) {
+                    toast.error("Por favor, cadastre o endereço do mercado")
+                    setIsSaving(false)
+                    return
+                }
+
                 const payload = {
                     name: values.name,
-                    address: values.address,
+                    address: selectedAddress,
                     profilePicture: uploadedImageUrl,
                     ownerId: initialMarket.ownerId!,
                     managersIds: initialMarket.managersIds || [],
@@ -302,7 +313,7 @@ export function MarketCreateClient({ initialMarket }: MarketCreateClientProps) {
                 setIsSaving(false)
             }
         },
-        [finalImageFile, initialMarket.managersIds, initialMarket.ownerId, isSaving, router]
+        [finalImageFile, initialMarket.managersIds, initialMarket.ownerId, isSaving, router, selectedAddress]
     )
 
     return (
@@ -392,23 +403,39 @@ export function MarketCreateClient({ initialMarket }: MarketCreateClientProps) {
                                     )}
                                 />
 
-                                <FormField
-                                    control={form.control}
-                                    name="address"
-                                    render={({ field }) => (
-                                        <FormItem className="md:col-span-1">
-                                            <FormLabel>Endereço</FormLabel>
-                                            <FormControl>
-                                                <Input
-                                                    placeholder="Rua, número, bairro, cidade"
-                                                    disabled={isSaving}
-                                                    {...field}
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                                <div className="md:col-span-2">
+                                    <FormLabel>Endereço do mercado</FormLabel>
+                                    <div className="mt-2">
+                                        {selectedAddress ? (
+                                            <MarketAddressCard
+                                                address={selectedAddress}
+                                                onEdit={() => setIsAddressDialogOpen(true)}
+                                                onRemove={() => setSelectedAddress(null)}
+                                            />
+                                        ) : (
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                className="w-full"
+                                                onClick={() => setIsAddressDialogOpen(true)}
+                                            >
+                                                <Plus size={16} className="mr-2" />
+                                                Cadastrar endereço do mercado
+                                            </Button>
+                                        )}
+                                    </div>
+                                    {/* Diálogo controlado para criar/editar */}
+                                    <MarketAddressDialog
+                                        initialValues={selectedAddress ?? undefined}
+                                        onAddressSelect={(address) => {
+                                            setSelectedAddress(address)
+                                            setIsAddressDialogOpen(false)
+                                        }}
+                                        selectedAddress={selectedAddress}
+                                        defaultOpen={isAddressDialogOpen}
+                                        onOpenChange={setIsAddressDialogOpen}
+                                    />
+                                </div>
                             </div>
 
                             <div className="flex justify-end pt-2">
