@@ -33,7 +33,7 @@ export default async function Home() {
             .map((part) => part.charAt(0).toUpperCase())
             .join("") || "MM";
 
-        const { markets } = await getMarkets({ page: 1, size: 10, ownerId: user.id });
+        const { markets } = await getMarkets({ page: 1, size: 100, ownerId: user.id });
 
 
     const getRoleName = (role: Role) => {
