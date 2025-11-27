@@ -330,6 +330,7 @@ export function MarketCreateClient({ initialMarket }: MarketCreateClientProps) {
                     <div className="flex flex-col items-center gap-4">
                         <div className="relative inline-flex">
                             <button
+                                id="market-profile-picture-upload"
                                 type="button"
                                 className="relative flex cursor-pointer size-24 items-center justify-center overflow-hidden rounded-full border border-dashed border-input transition-colors outline-none hover:bg-accent/50 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 has-disabled:pointer-events-none has-disabled:opacity-50 has-[img]:border-none data-[dragging=true]:bg-accent/50"
                                 onClick={openFileDialog}
@@ -357,6 +358,7 @@ export function MarketCreateClient({ initialMarket }: MarketCreateClientProps) {
 
                             {finalImageUrl && (
                                 <Button
+                                    id="market-profile-picture-remove"
                                     type="button"
                                     onClick={handleRemoveFinalImage}
                                     size="icon"
@@ -370,6 +372,7 @@ export function MarketCreateClient({ initialMarket }: MarketCreateClientProps) {
                             )}
 
                             <input
+                                id="market-profile-picture-input"
                                 {...getInputProps()}
                                 className="sr-only"
                                 aria-label="Upload de imagem"
@@ -383,7 +386,7 @@ export function MarketCreateClient({ initialMarket }: MarketCreateClientProps) {
                         </p>
                     </div>
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-6">
+                        <form id="market-create-form" onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-6">
                             <div className="grid gap-4 md:grid-cols-2">
                                 <FormField
                                     control={form.control}
@@ -393,6 +396,7 @@ export function MarketCreateClient({ initialMarket }: MarketCreateClientProps) {
                                             <FormLabel>Nome do mercado</FormLabel>
                                             <FormControl>
                                                 <Input
+                                                    id="market-create-name"
                                                     placeholder="Ex.: Supermercado Central"
                                                     disabled={isSaving}
                                                     {...field}
@@ -404,7 +408,7 @@ export function MarketCreateClient({ initialMarket }: MarketCreateClientProps) {
                                 />
 
                                 <div className="md:col-span-2">
-                                    <FormLabel>Endereço do mercado</FormLabel>
+                                    <FormLabel id="market-create-address-label">Endereço do mercado</FormLabel>
                                     <div className="mt-2">
                                         {selectedAddress ? (
                                             <MarketAddressCard
@@ -414,6 +418,7 @@ export function MarketCreateClient({ initialMarket }: MarketCreateClientProps) {
                                             />
                                         ) : (
                                             <Button
+                                                id="market-create-address-register-button"
                                                 type="button"
                                                 variant="outline"
                                                 className="w-full"
@@ -439,7 +444,7 @@ export function MarketCreateClient({ initialMarket }: MarketCreateClientProps) {
                             </div>
 
                             <div className="flex justify-end pt-2">
-                                <Button type="submit" className="min-w-[160px]" disabled={isSaving}>
+                                <Button id="market-create-submit-button" type="submit" className="min-w-[160px]" disabled={isSaving}>
                                     {isSaving ? "Cadastrando..." : "Cadastrar mercado"}
                                 </Button>
                             </div>
@@ -455,6 +460,7 @@ export function MarketCreateClient({ initialMarket }: MarketCreateClientProps) {
                         <DialogTitle className="flex items-center justify-between border-b p-4 text-base">
                             <div className="flex items-center gap-2">
                                 <Button
+                                    id="market-crop-image-cancel-button"
                                     type="button"
                                     variant="ghost"
                                     size="icon"
@@ -466,7 +472,7 @@ export function MarketCreateClient({ initialMarket }: MarketCreateClientProps) {
                                 </Button>
                                 <span>Recortar imagem</span>
                             </div>
-                            <Button type="button" className="-my-1" onClick={handleApply} disabled={!previewUrl}>
+                            <Button id="market-crop-image-apply-button" type="button" className="-my-1" onClick={handleApply} disabled={!previewUrl}>
                                 Aplicar
                             </Button>
                         </DialogTitle>
@@ -482,8 +488,9 @@ export function MarketCreateClient({ initialMarket }: MarketCreateClientProps) {
 
                     <DialogFooter className="border-t px-4 py-6">
                         <div className="mx-auto flex w-full max-w-80 items-center gap-4">
-                            <ZoomOutIcon className="shrink-0 opacity-60" size={16} aria-hidden="true" />
+                            <ZoomOutIcon id="market-crop-image-zoom-out-button" className="shrink-0 opacity-60" size={16} aria-hidden="true" />
                             <Slider
+                                id="market-crop-image-zoom-slider"
                                 defaultValue={[1]}
                                 value={[zoom]}
                                 min={1}
@@ -492,7 +499,7 @@ export function MarketCreateClient({ initialMarket }: MarketCreateClientProps) {
                                 onValueChange={(value) => setZoom(value[0])}
                                 aria-label="Zoom slider"
                             />
-                            <ZoomInIcon className="shrink-0 opacity-60" size={16} aria-hidden="true" />
+                            <ZoomInIcon id="market-crop-image-zoom-in-button" className="shrink-0 opacity-60" size={16} aria-hidden="true" />
                         </div>
                     </DialogFooter>
                 </DialogContent>
