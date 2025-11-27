@@ -1,4 +1,4 @@
-import { getOrders } from "@/actions/order.actions";
+import { getOrdersByMarketId } from "@/actions/order.actions";
 import { HeaderInfo } from "@/app/components/HeaderInfo";
 import Pagination from "@/app/components/Pagination";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
@@ -16,11 +16,10 @@ export default async function OrdersPage({ params, searchParams }: { params: Pro
     const { tenantId } = await params;
     const { page = "1", size = "10", status = "", paymentMethod = "" } = await searchParams;
 
-    const { orders, meta } = await getOrders({
+    const { orders, meta } = await getOrdersByMarketId(tenantId, {
         page: page ? Number(page) : 1,
         size: size ? Number(size) : 10,
-        status: status,
-        marketId: tenantId,
+        status: status || undefined,
     });
 
     const formatCurrency = (value: number) => {
