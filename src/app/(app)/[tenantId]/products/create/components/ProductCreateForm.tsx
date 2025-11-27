@@ -152,36 +152,36 @@ export const ProductCreateForm = ({ tenantId, categories, productId }: ProductCr
 
     if (isLoading) {
         return (
-            <Card className="max-w-3xl mx-auto">
+            <Card id="product-loading-card" className="max-w-3xl mx-auto">
                 <CardContent className="pt-6 flex items-center justify-center min-h-[200px]">
-                    <p className="text-muted-foreground">Carregando produto...</p>
+                    <p id="product-loading-message" className="text-muted-foreground">Carregando produto...</p>
                 </CardContent>
             </Card>
         );
     }
 
     return (
-        <div className="grid gap-6 grid-cols-12">
-            <Card className="2xl:col-span-9 xl:col-span-8 lg:col-span-7 md:col-span-6 sm:col-span-5">
+        <div id="product-form-container" className="grid gap-6 grid-cols-12">
+            <Card id="product-form-card" className="2xl:col-span-9 xl:col-span-8 lg:col-span-7 md:col-span-6 sm:col-span-5">
                 <CardHeader>
-                    <CardTitle>{isEditing ? "Editar Produto" : "Cadastro de Produto"}</CardTitle>
+                    <CardTitle id="product-form-title">{isEditing ? "Editar Produto" : "Cadastro de Produto"}</CardTitle>
                 </CardHeader>
                 <Separator />
                 <CardContent className="pt-6">
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="flex xl:flex-row flex-col gap-6">
-                            <div className="space-y-4">
+                        <form id="product-form" onSubmit={form.handleSubmit(onSubmit)} className="flex xl:flex-row flex-col gap-6">
+                            <div id="product-image-upload-container" className="space-y-4">
                                 {productImage ? (
-                                    <div className="space-y-4">
+                                    <div id="product-image-editor-container" className="space-y-4">
                                         <CropperZoomSlider
                                             image={productImage}
                                             onCropChange={handleCropChange}
                                             onZoomChange={handleZoomChange}
                                         />
-                                        <Card className="flex flex-row items-center p-2 gap-2">
-                                            <ImageIcon size={16} />
-                                            <span className="text-xs text-muted-foreground">{productImage.split("/").pop()}</span>
-                                            <Button variant="ghost" className="ml-auto" size="icon_xs" onClick={() => setProductImage(null)}>
+                                        <Card id="product-image-card" className="flex flex-row items-center p-2 gap-2">
+                                            <ImageIcon id="product-image-icon" size={16} />
+                                            <span id="product-image-filename" className="text-xs text-muted-foreground">{productImage.split("/").pop()}</span>
+                                            <Button id="product-remove-image-button" variant="ghost" className="ml-auto" size="icon_xs" onClick={() => setProductImage(null)}>
                                                 <XIcon size={16} />
                                             </Button>
                                         </Card>
@@ -190,15 +190,15 @@ export const ProductCreateForm = ({ tenantId, categories, productId }: ProductCr
                                     <SingleImageUploader onImageChange={handleSetProductImage} />
                                 )}
                             </div>
-                            <div className="flex flex-col gap-4 flex-1">
+                            <div id="product-form-fields-container" className="flex flex-col gap-4 flex-1">
                                 <FormField
                                     control={form.control}
                                     name="name"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Nome do Produto</FormLabel>
+                                            <FormLabel id="product-name-label" htmlFor="product-name-input">Nome do Produto</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="Digite o nome do produto" {...field} />
+                                                <Input id="product-name-input" placeholder="Digite o nome do produto" {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -209,16 +209,16 @@ export const ProductCreateForm = ({ tenantId, categories, productId }: ProductCr
                                     name="categoryId"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Categoria</FormLabel>
+                                            <FormLabel id="product-category-label" htmlFor="product-category-select">Categoria</FormLabel>
                                             <Select onValueChange={field.onChange} value={field.value}>
                                                 <FormControl>
-                                                    <SelectTrigger>
+                                                    <SelectTrigger id="product-category-select">
                                                         <SelectValue placeholder="Selecione a categoria" />
                                                     </SelectTrigger>
                                                 </FormControl>
-                                                <SelectContent>
+                                                <SelectContent id="product-category-select-content">
                                                     {categories.map((category) => (
-                                                        <SelectItem key={category.id} value={category.id}>
+                                                        <SelectItem key={category.id} id={`product-category-option-${category.id}`} value={category.id}>
                                                             {category.name}
                                                         </SelectItem>
                                                     ))}
@@ -228,15 +228,16 @@ export const ProductCreateForm = ({ tenantId, categories, productId }: ProductCr
                                         </FormItem>
                                     )}
                                 />
-                                <div className="grid gap-4 sm:grid-cols-2">
+                                <div id="product-price-sku-grid" className="grid gap-4 sm:grid-cols-2">
                                     <FormField
                                         control={form.control}
                                         name="price"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Preço</FormLabel>
+                                                <FormLabel id="product-price-label" htmlFor="product-price-input">Preço</FormLabel>
                                                 <FormControl>
                                                     <Input
+                                                        id="product-price-input"
                                                         type="number"
                                                         step="0.01"
                                                         placeholder="Digite o preço"
@@ -260,9 +261,9 @@ export const ProductCreateForm = ({ tenantId, categories, productId }: ProductCr
                                         name="sku"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>SKU (opcional)</FormLabel>
+                                                <FormLabel id="product-sku-label" htmlFor="product-sku-input">SKU (opcional)</FormLabel>
                                                 <FormControl>
-                                                    <Input placeholder="Código interno" {...field} />
+                                                    <Input id="product-sku-input" placeholder="Código interno" {...field} />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -273,21 +274,21 @@ export const ProductCreateForm = ({ tenantId, categories, productId }: ProductCr
                                     control={form.control}
                                     name="isActive"
                                     render={({ field }) => (
-                                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                                        <FormItem id="product-active-form-item" className="flex flex-row items-center justify-between rounded-lg border p-4">
                                             <div className="space-y-0.5">
-                                                <FormLabel className="text-base">Produto ativo</FormLabel>
-                                                <div className="text-sm text-muted-foreground">
+                                                <FormLabel id="product-active-label" htmlFor="product-active-switch" className="text-base">Produto ativo</FormLabel>
+                                                <div id="product-active-description" className="text-sm text-muted-foreground">
                                                     {field.value ? "Produto visível para clientes" : "Produto oculto"}
                                                 </div>
                                             </div>
                                             <FormControl>
-                                                <Switch checked={field.value ?? true} onCheckedChange={field.onChange} />
+                                                <Switch id="product-active-switch" checked={field.value ?? true} onCheckedChange={field.onChange} />
                                             </FormControl>
                                         </FormItem>
                                     )}
                                 />
-                                <div className="flex justify-end">
-                                    <Button type="submit" className="min-w-[120px]" disabled={isSubmitting}>
+                                <div id="product-form-actions" className="flex justify-end">
+                                    <Button id="product-submit-button" type="submit" className="min-w-[120px]" disabled={isSubmitting}>
                                         {isSubmitting ? "Salvando..." : isEditing ? "Salvar alterações" : "Cadastrar"}
                                     </Button>
                                 </div>
@@ -298,7 +299,7 @@ export const ProductCreateForm = ({ tenantId, categories, productId }: ProductCr
                 </CardContent>
             </Card>
 
-            <div className="2xl:col-span-3 xl:col-span-4 lg:col-span-5 md:col-span-6 sm:col-span-7">
+            <div id="product-preview-container" className="2xl:col-span-3 xl:col-span-4 lg:col-span-5 md:col-span-6 sm:col-span-7">
                 <ProductLivePreview
                     name={form.watch("name")}
                     price={Number(form.watch("price")) || 0}
