@@ -318,17 +318,17 @@ export function MarketCreateClient({ initialMarket }: MarketCreateClientProps) {
 
     return (
         <>
-            <Card className="flex flex-col flex-1">
-                <CardHeader>
-                    <CardTitle>Informações Gerais</CardTitle>
-                    <CardDescription>
+            <Card id="market-create-card" className="flex flex-col flex-1">
+                <CardHeader id="market-create-header">
+                    <CardTitle id="market-create-title">Informações Gerais</CardTitle>
+                    <CardDescription id="market-create-description">
                         Preencha os dados básicos do novo mercado.
                     </CardDescription>
                 </CardHeader>
-                <Separator />
-                <CardContent className="flex flex-col gap-4 pt-6 space-y-6">
-                    <div className="flex flex-col items-center gap-4">
-                        <div className="relative inline-flex">
+                <Separator id="market-create-separator" />
+                <CardContent id="market-create-content" className="flex flex-col gap-4 pt-6 space-y-6">
+                    <div id="market-profile-picture-container" className="flex flex-col items-center gap-4">
+                        <div id="market-profile-picture-wrapper" className="relative inline-flex">
                             <button
                                 id="market-profile-picture-upload"
                                 type="button"
@@ -344,6 +344,7 @@ export function MarketCreateClient({ initialMarket }: MarketCreateClientProps) {
                             >
                                 {finalImageUrl ? (
                                     <NextImage
+                                        id="market-profile-picture-image"
                                         src={finalImageUrl}
                                         alt="Logo do mercado"
                                         width={96}
@@ -352,7 +353,7 @@ export function MarketCreateClient({ initialMarket }: MarketCreateClientProps) {
                                         unoptimized
                                     />
                                 ) : (
-                                    <CircleUserRoundIcon className="size-6 opacity-60" aria-hidden="true" />
+                                    <CircleUserRoundIcon id="market-profile-picture-placeholder-icon" className="size-6 opacity-60" aria-hidden="true" />
                                 )}
                             </button>
 
@@ -381,19 +382,19 @@ export function MarketCreateClient({ initialMarket }: MarketCreateClientProps) {
                             />
                         </div>
 
-                        <p className="text-xs text-muted-foreground">
+                        <p id="market-profile-picture-help-text" className="text-xs text-muted-foreground">
                             Formatos aceitos: JPG ou PNG até 5MB.
                         </p>
                     </div>
                     <Form {...form}>
                         <form id="market-create-form" onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-6">
-                            <div className="grid gap-4 md:grid-cols-2">
+                            <div id="market-create-form-fields-grid" className="grid gap-4 md:grid-cols-2">
                                 <FormField
                                     control={form.control}
                                     name="name"
                                     render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Nome do mercado</FormLabel>
+                                        <FormItem id="market-create-name-form-item">
+                                            <FormLabel id="market-create-name-label" htmlFor="market-create-name">Nome do mercado</FormLabel>
                                             <FormControl>
                                                 <Input
                                                     id="market-create-name"
@@ -407,9 +408,9 @@ export function MarketCreateClient({ initialMarket }: MarketCreateClientProps) {
                                     )}
                                 />
 
-                                <div className="md:col-span-2">
+                                <div id="market-create-address-container" className="md:col-span-2">
                                     <FormLabel id="market-create-address-label">Endereço do mercado</FormLabel>
-                                    <div className="mt-2">
+                                    <div id="market-create-address-content" className="mt-2">
                                         {selectedAddress ? (
                                             <MarketAddressCard
                                                 address={selectedAddress}
@@ -424,7 +425,7 @@ export function MarketCreateClient({ initialMarket }: MarketCreateClientProps) {
                                                 className="w-full"
                                                 onClick={() => setIsAddressDialogOpen(true)}
                                             >
-                                                <Plus size={16} className="mr-2" />
+                                                <Plus id="market-create-address-register-button-icon" size={16} className="mr-2" />
                                                 Cadastrar endereço do mercado
                                             </Button>
                                         )}
@@ -443,7 +444,7 @@ export function MarketCreateClient({ initialMarket }: MarketCreateClientProps) {
                                 </div>
                             </div>
 
-                            <div className="flex justify-end pt-2">
+                            <div id="market-create-form-actions" className="flex justify-end pt-2">
                                 <Button id="market-create-submit-button" type="submit" className="min-w-[160px]" disabled={isSaving}>
                                     {isSaving ? "Cadastrando..." : "Cadastrar mercado"}
                                 </Button>
@@ -454,11 +455,11 @@ export function MarketCreateClient({ initialMarket }: MarketCreateClientProps) {
             </Card>
 
             <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
-                <DialogContent className="gap-0 p-0 sm:max-w-140 *:[button]:hidden">
-                    <DialogDescription className="sr-only">Crop image dialog</DialogDescription>
-                    <DialogHeader className="contents space-y-0 text-left">
-                        <DialogTitle className="flex items-center justify-between border-b p-4 text-base">
-                            <div className="flex items-center gap-2">
+                <DialogContent id="market-crop-image-dialog-content" className="gap-0 p-0 sm:max-w-140 *:[button]:hidden">
+                    <DialogDescription id="market-crop-image-dialog-description" className="sr-only">Crop image dialog</DialogDescription>
+                    <DialogHeader id="market-crop-image-dialog-header" className="contents space-y-0 text-left">
+                        <DialogTitle id="market-crop-image-dialog-title" className="flex items-center justify-between border-b p-4 text-base">
+                            <div id="market-crop-image-dialog-title-left" className="flex items-center gap-2">
                                 <Button
                                     id="market-crop-image-cancel-button"
                                     type="button"
@@ -468,9 +469,9 @@ export function MarketCreateClient({ initialMarket }: MarketCreateClientProps) {
                                     onClick={() => handleDialogOpenChange(false)}
                                     aria-label="Cancelar"
                                 >
-                                    <ArrowLeftIcon aria-hidden="true" />
+                                    <ArrowLeftIcon id="market-crop-image-cancel-button-icon" aria-hidden="true" />
                                 </Button>
-                                <span>Recortar imagem</span>
+                                <span id="market-crop-image-dialog-title-text">Recortar imagem</span>
                             </div>
                             <Button id="market-crop-image-apply-button" type="button" className="-my-1" onClick={handleApply} disabled={!previewUrl}>
                                 Aplicar
@@ -479,16 +480,16 @@ export function MarketCreateClient({ initialMarket }: MarketCreateClientProps) {
                     </DialogHeader>
 
                     {previewUrl && (
-                        <Cropper className="h-96 sm:h-120" image={previewUrl} zoom={zoom} onCropChange={handleCropChange} onZoomChange={setZoom}>
-                            <CropperDescription />
-                            <CropperImage />
-                            <CropperCropArea />
+                        <Cropper id="market-crop-image-cropper" className="h-96 sm:h-120" image={previewUrl} zoom={zoom} onCropChange={handleCropChange} onZoomChange={setZoom}>
+                            <CropperDescription id="market-crop-image-cropper-description" />
+                            <CropperImage id="market-crop-image-cropper-image" />
+                            <CropperCropArea id="market-crop-image-cropper-area" />
                         </Cropper>
                     )}
 
-                    <DialogFooter className="border-t px-4 py-6">
-                        <div className="mx-auto flex w-full max-w-80 items-center gap-4">
-                            <ZoomOutIcon id="market-crop-image-zoom-out-button" className="shrink-0 opacity-60" size={16} aria-hidden="true" />
+                    <DialogFooter id="market-crop-image-dialog-footer" className="border-t px-4 py-6">
+                        <div id="market-crop-image-zoom-controls" className="mx-auto flex w-full max-w-80 items-center gap-4">
+                            <ZoomOutIcon id="market-crop-image-zoom-out-icon" className="shrink-0 opacity-60" size={16} aria-hidden="true" />
                             <Slider
                                 id="market-crop-image-zoom-slider"
                                 defaultValue={[1]}
@@ -499,7 +500,7 @@ export function MarketCreateClient({ initialMarket }: MarketCreateClientProps) {
                                 onValueChange={(value) => setZoom(value[0])}
                                 aria-label="Zoom slider"
                             />
-                            <ZoomInIcon id="market-crop-image-zoom-in-button" className="shrink-0 opacity-60" size={16} aria-hidden="true" />
+                            <ZoomInIcon id="market-crop-image-zoom-in-icon" className="shrink-0 opacity-60" size={16} aria-hidden="true" />
                         </div>
                     </DialogFooter>
                 </DialogContent>
