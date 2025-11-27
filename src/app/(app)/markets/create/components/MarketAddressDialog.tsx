@@ -344,38 +344,40 @@ export function MarketAddressDialog({
     return (
         <Form {...form}>
             <Dialog open={open} onOpenChange={handleOpenChange}>
-                <DialogContent className="flex flex-col flex-1 sm:max-w-[520px] h-[90vh] p-0 gap-0">
-                    <DialogHeader className="p-4">
-                        <DialogTitle>Endereço do mercado</DialogTitle>
-                        <DialogDescription>
+                <DialogContent id="market-address-dialog-content" className="flex flex-col flex-1 sm:max-w-[520px] h-[90vh] p-0 gap-0">
+                    <DialogHeader id="market-address-dialog-header" className="p-4">
+                        <DialogTitle id="market-address-dialog-title">Endereço do mercado</DialogTitle>
+                        <DialogDescription id="market-address-dialog-description">
                             Preencha as informações abaixo para cadastrar o endereço do mercado.
                         </DialogDescription>
                     </DialogHeader>
 
-                    <Separator />
+                    <Separator id="market-address-dialog-separator-top" />
 
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1">
-                        <ScrollArea className="flex flex-col flex-grow h-0 overflow-y-auto p-4 space-y-4">
-                            <div className="flex flex-col flex-1 gap-4">
-                                <div className="grid gap-4 sm:grid-cols-2">
+                    <form id="market-address-dialog-form" onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1">
+                        <ScrollArea id="market-address-dialog-scroll-area" className="flex flex-col flex-grow h-0 overflow-y-auto p-4 space-y-4">
+                            <div id="market-address-dialog-form-fields" className="flex flex-col flex-1 gap-4">
+                                <div id="market-address-dialog-form-grid" className="grid gap-4 sm:grid-cols-2">
                                     <Button
+                                        id="market-address-dialog-get-location-button"
                                         type="button"
                                         variant="outline"
                                         onClick={handleGetLocation}
                                         disabled={isLoadingLocation}
                                         className="w-full sm:col-span-2"
                                     >
-                                        <Navigation className="mr-2 size-4" />
+                                        <Navigation id="market-address-dialog-get-location-button-icon" className="mr-2 size-4" />
                                         {isLoadingLocation ? "Buscando localização..." : "Usar minha localização atual"}
                                     </Button>
                                     <FormField
                                         control={form.control}
                                         name="zipCode"
                                         render={({ field }) => (
-                                            <FormItem className="sm:col-span-2">
-                                                <FormLabel>CEP</FormLabel>
+                                            <FormItem id="market-address-dialog-zipcode-form-item" className="sm:col-span-2">
+                                                <FormLabel id="market-address-dialog-zipcode-label" htmlFor="market-address-dialog-zipcode-input">CEP</FormLabel>
                                                 <FormControl>
                                                     <Input
+                                                        id="market-address-dialog-zipcode-input"
                                                         placeholder="00000-000"
                                                         {...field}
                                                         value={field.value}
@@ -409,10 +411,10 @@ export function MarketAddressDialog({
                                         control={form.control}
                                         name="name"
                                         render={({ field }) => (
-                                            <FormItem className="sm:col-span-2">
-                                                <FormLabel>Identificação do endereço</FormLabel>
+                                            <FormItem id="market-address-dialog-name-form-item" className="sm:col-span-2">
+                                                <FormLabel id="market-address-dialog-name-label" htmlFor="market-address-dialog-name-input">Identificação do endereço</FormLabel>
                                                 <FormControl>
-                                                    <Input placeholder="Endereço do mercado" {...field} />
+                                                    <Input id="market-address-dialog-name-input" placeholder="Endereço do mercado" {...field} />
                                                 </FormControl>
                                             </FormItem>
                                         )}
@@ -421,10 +423,10 @@ export function MarketAddressDialog({
                                         control={form.control}
                                         name="street"
                                         render={({ field }) => (
-                                            <FormItem className="sm:col-span-2">
-                                                <FormLabel>Rua</FormLabel>
+                                            <FormItem id="market-address-dialog-street-form-item" className="sm:col-span-2">
+                                                <FormLabel id="market-address-dialog-street-label" htmlFor="market-address-dialog-street-input">Rua</FormLabel>
                                                 <FormControl>
-                                                    <Input placeholder="Rua das Flores" {...field} />
+                                                    <Input id="market-address-dialog-street-input" placeholder="Rua das Flores" {...field} />
                                                 </FormControl>
                                             </FormItem>
                                         )}
@@ -433,10 +435,10 @@ export function MarketAddressDialog({
                                         control={form.control}
                                         name="number"
                                         render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Número</FormLabel>
+                                            <FormItem id="market-address-dialog-number-form-item">
+                                                <FormLabel id="market-address-dialog-number-label" htmlFor="market-address-dialog-number-input">Número</FormLabel>
                                                 <FormControl>
-                                                    <Input placeholder="123" {...field} />
+                                                    <Input id="market-address-dialog-number-input" placeholder="123" {...field} />
                                                 </FormControl>
                                             </FormItem>
                                         )}
@@ -445,10 +447,10 @@ export function MarketAddressDialog({
                                         control={form.control}
                                         name="complement"
                                         render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Complemento (opcional)</FormLabel>
+                                            <FormItem id="market-address-dialog-complement-form-item">
+                                                <FormLabel id="market-address-dialog-complement-label" htmlFor="market-address-dialog-complement-input">Complemento (opcional)</FormLabel>
                                                 <FormControl>
-                                                    <Input placeholder="Apto 101" {...field} />
+                                                    <Input id="market-address-dialog-complement-input" placeholder="Apto 101" {...field} />
                                                 </FormControl>
                                             </FormItem>
                                         )}
@@ -457,10 +459,10 @@ export function MarketAddressDialog({
                                         control={form.control}
                                         name="neighborhood"
                                         render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Bairro</FormLabel>
+                                            <FormItem id="market-address-dialog-neighborhood-form-item">
+                                                <FormLabel id="market-address-dialog-neighborhood-label" htmlFor="market-address-dialog-neighborhood-input">Bairro</FormLabel>
                                                 <FormControl>
-                                                    <Input placeholder="Centro" {...field} />
+                                                    <Input id="market-address-dialog-neighborhood-input" placeholder="Centro" {...field} />
                                                 </FormControl>
                                             </FormItem>
                                         )}
@@ -469,25 +471,25 @@ export function MarketAddressDialog({
                                         control={form.control}
                                         name="latitude"
                                         render={({ field }) => (
-                                            <input type="hidden" {...field} value={field.value ?? ""} />
+                                            <input id="market-address-dialog-latitude-input" type="hidden" {...field} value={field.value ?? ""} />
                                         )}
                                     />
                                     <FormField
                                         control={form.control}
                                         name="longitude"
                                         render={({ field }) => (
-                                            <input type="hidden" {...field} value={field.value ?? ""} />
+                                            <input id="market-address-dialog-longitude-input" type="hidden" {...field} value={field.value ?? ""} />
                                         )}
                                     />
-                                    <div className="grid sm:grid-cols-3 gap-4 sm:col-span-1">
+                                    <div id="market-address-dialog-city-state-grid" className="grid sm:grid-cols-3 gap-4 sm:col-span-1">
                                         <FormField
                                             control={form.control}
                                             name="city"
                                             render={({ field }) => (
-                                                <FormItem className="sm:col-span-2">
-                                                    <FormLabel>Cidade</FormLabel>
+                                                <FormItem id="market-address-dialog-city-form-item" className="sm:col-span-2">
+                                                    <FormLabel id="market-address-dialog-city-label" htmlFor="market-address-dialog-city-input">Cidade</FormLabel>
                                                     <FormControl>
-                                                        <Input placeholder="São Paulo" {...field} />
+                                                        <Input id="market-address-dialog-city-input" placeholder="São Paulo" {...field} />
                                                     </FormControl>
                                                 </FormItem>
                                             )}
@@ -496,10 +498,10 @@ export function MarketAddressDialog({
                                             control={form.control}
                                             name="state"
                                             render={({ field }) => (
-                                                <FormItem className="sm:col-span-1">
-                                                    <FormLabel>Estado</FormLabel>
+                                                <FormItem id="market-address-dialog-state-form-item" className="sm:col-span-1">
+                                                    <FormLabel id="market-address-dialog-state-label" htmlFor="market-address-dialog-state-input">Estado</FormLabel>
                                                     <FormControl>
-                                                        <Input placeholder="SP" maxLength={2} {...field} />
+                                                        <Input id="market-address-dialog-state-input" placeholder="SP" maxLength={2} {...field} />
                                                     </FormControl>
                                                 </FormItem>
                                             )}
@@ -507,27 +509,30 @@ export function MarketAddressDialog({
                                     </div>
                                 </div>
 
-                                <GoogleMaps
-                                    latitude={latitudeValue}
-                                    longitude={longitudeValue}
-                                    height="260px"
-                                    zoom={hasLocation ? 16 : 12}
-                                    controls={false}
-                                    onLocationChange={handleLocationChange}
-                                />
+                                <div id="market-address-dialog-map-container">
+                                    <GoogleMaps
+                                        latitude={latitudeValue}
+                                        longitude={longitudeValue}
+                                        height="260px"
+                                        zoom={hasLocation ? 16 : 12}
+                                        controls={false}
+                                        onLocationChange={handleLocationChange}
+                                    />
+                                </div>
                             </div>
                         </ScrollArea>
                         
-                        <Separator />
+                        <Separator id="market-address-dialog-separator-bottom" />
 
                         {form.formState.errors.root?.message ? (
-                            <p className="text-sm text-destructive">
+                            <p id="market-address-dialog-error-message" className="text-sm text-destructive">
                                 {form.formState.errors.root.message}
                             </p>
                         ) : null}
-                        <DialogFooter className="gap-2 p-4">
+                        <DialogFooter id="market-address-dialog-footer" className="gap-2 p-4">
                             <DialogClose asChild>
                                 <Button
+                                    id="market-address-dialog-cancel-button"
                                     type="button"
                                     variant="outline"
                                     onClick={() => handleOpenChange(false)}
@@ -535,7 +540,7 @@ export function MarketAddressDialog({
                                     Cancelar
                                 </Button>
                             </DialogClose>
-                            <Button type="button" onClick={() => onSubmit(form.getValues())} disabled={isFetchingCep}>
+                            <Button id="market-address-dialog-submit-button" type="button" onClick={() => onSubmit(form.getValues())} disabled={isFetchingCep}>
                                 {isFetchingCep
                                     ? "Consultando CEP..."
                                     : "Selecionar endereço"}

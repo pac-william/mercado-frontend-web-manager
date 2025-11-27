@@ -19,49 +19,53 @@ export function MarketAddressCard({ address, onEdit, onRemove, showRemove = true
         address.longitude !== null && address.longitude !== undefined
 
     return (
-        <Card className="flex flex-col flex-1">
-            <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-card-foreground">{address.name}</CardTitle>
-                <div className="flex items-center gap-2">
+        <Card id="market-address-card" className="flex flex-col flex-1">
+            <CardHeader id="market-address-card-header" className="flex flex-row items-center justify-between">
+                <CardTitle id="market-address-card-title" className="text-card-foreground">{address.name}</CardTitle>
+                <div id="market-address-card-actions" className="flex items-center gap-2">
                     <Button
+                        id="market-address-card-edit-button"
                         variant="ghost"
                         size="icon_xs"
                         className="rounded-full"
                         onClick={onEdit}
                     >
-                        <Pencil size={14} />
+                        <Pencil id="market-address-card-edit-button-icon" size={14} />
                     </Button>
                     {showRemove && onRemove && (
                         <Button
+                            id="market-address-card-remove-button"
                             variant="ghost"
                             size="icon_xs"
                             className="text-xs rounded-full text-destructive hover:text-destructive/80"
                             onClick={onRemove}
                         >
-                            <Trash2 size={14} />
+                            <Trash2 id="market-address-card-remove-button-icon" size={14} />
                         </Button>
                     )}
                 </div>
             </CardHeader>
-            <Separator />
-            <CardContent className="flex flex-col flex-1 p-4 gap-4">
-                <div className="space-y-1 text-sm text-muted-foreground">
-                    <p>
+            <Separator id="market-address-card-separator" />
+            <CardContent id="market-address-card-content" className="flex flex-col flex-1 p-4 gap-4">
+                <div id="market-address-card-address-info" className="space-y-1 text-sm text-muted-foreground">
+                    <p id="market-address-card-street-number">
                         {address.street}, {address.number}
                         {address.complement && ` - ${address.complement}`}
                     </p>
-                    <p>{address.neighborhood}</p>
-                    <p>
+                    <p id="market-address-card-neighborhood">{address.neighborhood}</p>
+                    <p id="market-address-card-city-state-zip">
                         {address.city} - {address.state}, {address.zipCode}
                     </p>
                 </div>
-                <GoogleMaps
-                    latitude={address.latitude}
-                    longitude={address.longitude}
-                    height="220px"
-                    zoom={hasLocation ? 16 : 12}
-                    interactive={false}
-                />
+                <div id="market-address-card-map-container">
+                    <GoogleMaps
+                        latitude={address.latitude}
+                        longitude={address.longitude}
+                        height="220px"
+                        zoom={hasLocation ? 16 : 12}
+                        interactive={false}
+                    />
+                </div>
             </CardContent>
         </Card>
     )
