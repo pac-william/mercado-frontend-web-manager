@@ -9,11 +9,12 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Truck, Package } from "lucide-react";
+import { MoreVertical, Truck, Package, ArrowRightLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AssignDelivererDialog } from "./AssignDelivererDialog";
+import { OrderStatusDialog } from "./OrderStatusDialog";
 
 interface OrderActionsProps {
     order: OrderResponseDTO;
@@ -23,12 +24,15 @@ interface OrderActionsProps {
 export function OrderActions({ order, tenantId }: OrderActionsProps) {
     const router = useRouter();
     const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
+    const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
     const handleStatusUpdate = async (newStatus: string) => {
         setIsLoading(true);
         try {
-            await updateOrderStatus(order.id, { status: newStatus as any });
+            await updateOrderStatus(order.id, { 
+                status: newStatus as "PENDING" | "CONFIRMED" | "PREPARING" | "READY_FOR_DELIVERY" | "OUT_FOR_DELIVERY" | "DELIVERED" | "CANCELLED" 
+            });
             toast.success("Status do pedido atualizado com sucesso!");
             router.refresh();
         } catch (error) {
@@ -38,23 +42,45 @@ export function OrderActions({ order, tenantId }: OrderActionsProps) {
         }
     };
 
-    const handleAssignDeliverer = async (delivererId: string) => {
+    const handleAssignDeliverer = async (delivererId: string | null) => {
         setIsLoading(true);
         try {
-            await assignDeliverer(order.id, { delivererId });
-            toast.success("Entregador atribuído com sucesso!");
+            if (delivererId) {
+                await assignDeliverer(order.id, { delivererId });
+                toast.success("Entregador atribuído com sucesso!");
+            } else {
+                await updateOrderStatus(order.id, {});
+                toast.success("Entregador removido com sucesso!");
+            }
             setIsAssignDialogOpen(false);
             router.refresh();
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : "Erro ao atribuir entregador");
+            toast.error(error instanceof Error ? error.message : "Erro ao atualizar entregador");
         } finally {
             setIsLoading(false);
         }
     };
 
-    // Remover aceitar/rejeitar do menu, agora são botões explícitos
-    const canUpdateStatus = ["CONFIRMED", "PREPARING", "READY_FOR_DELIVERY", "OUT_FOR_DELIVERY"].includes(order.status);
-    const canAssignDeliverer = ["CONFIRMED", "PREPARING", "READY_FOR_DELIVERY"].includes(order.status);
+    const handleStatusChange = async (newStatus: string) => {
+        setIsLoading(true);
+        try {
+            await updateOrderStatus(order.id, { 
+                status: newStatus as "PENDING" | "CONFIRMED" | "PREPARING" | "READY_FOR_DELIVERY" | "OUT_FOR_DELIVERY" | "DELIVERED" | "CANCELLED" 
+            });
+            toast.success("Status do pedido atualizado com sucesso!");
+            setIsStatusDialogOpen(false);
+            router.refresh();
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Erro ao atualizar status do pedido");
+            throw error;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Sempre permitir alterar entregador, independente do status
+    const canAssignDeliverer = true;
+    const canChangeStatus = true;
 
     const getNextStatus = () => {
         const statusFlow: Record<string, string> = {
@@ -86,14 +112,25 @@ export function OrderActions({ order, tenantId }: OrderActionsProps) {
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                    {canUpdateStatus && (
-                        <DropdownMenuItem
-                            onClick={() => handleStatusUpdate(getNextStatus() || "")}
-                            disabled={isLoading}
-                        >
-                            <Package className="h-4 w-4 mr-2" />
-                            {getNextStatusLabel()}
-                        </DropdownMenuItem>
+                    {canChangeStatus && (
+                        <>
+                            <DropdownMenuItem
+                                onClick={() => setIsStatusDialogOpen(true)}
+                                disabled={isLoading}
+                            >
+                                <ArrowRightLeft className="h-4 w-4 mr-2" />
+                                Alterar Status
+                            </DropdownMenuItem>
+                            {getNextStatus() && (
+                                <DropdownMenuItem
+                                    onClick={() => handleStatusUpdate(getNextStatus() || "")}
+                                    disabled={isLoading}
+                                >
+                                    <Package className="h-4 w-4 mr-2" />
+                                    {getNextStatusLabel()}
+                                </DropdownMenuItem>
+                            )}
+                        </>
                     )}
                     {canAssignDeliverer && (
                         <DropdownMenuItem
@@ -113,6 +150,13 @@ export function OrderActions({ order, tenantId }: OrderActionsProps) {
                 orderId={order.id}
                 currentDelivererId={order.delivererId || undefined}
                 onAssign={handleAssignDeliverer}
+            />
+
+            <OrderStatusDialog
+                open={isStatusDialogOpen}
+                onOpenChange={setIsStatusDialogOpen}
+                currentStatus={order.status}
+                onStatusChange={handleStatusChange}
             />
         </>
     );

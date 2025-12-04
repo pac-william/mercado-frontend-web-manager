@@ -29,18 +29,14 @@ export function SelectFilter({ options, value, label, placeholder, filterKey, ba
             params.delete(filterKey);
         }
         
-        // Reset page when filter changes
         params.delete("page");
         
         const path = basePath || "";
         router.push(`${path}?${params.toString()}`);
     }
 
-    // Filtrar opções com valor vazio e usar "__all__" como valor especial para "Todos"
     const validOptions = options.filter(opt => opt.value !== "");
     const hasAllOption = options.some(opt => opt.value === "" && opt.label.toLowerCase().includes("todos"));
-    
-    // Usar "__all__" como valor quando não há valor selecionado ou quando o valor é vazio
     const selectValue = value && value !== "" ? value : (hasAllOption ? "__all__" : undefined);
     
     return (
