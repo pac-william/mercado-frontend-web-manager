@@ -19,7 +19,6 @@ import {
     Home,
     LayoutDashboard,
     Megaphone,
-    MessagesSquare,
     Package,
     Receipt,
     Settings,
@@ -94,12 +93,7 @@ export default function AdminSidebar({ tenantId, isOwner }: AdminSidebarProps) {
             title: "Entregadores",
             href: `/${tenantId}/deliverers`,
             icon: Truck,
-        },
-        {
-            title: "Atendimento",
-            href: `/${tenantId}/support`,
-            icon: MessagesSquare,
-        },
+        }
     ];
 
     // Itens do menu que apenas proprietários têm acesso
